@@ -12,14 +12,16 @@ export default async function DashboardPage() {
     getUsers()
   ])
 
-  const totalEntries = entriesResult.success ? entriesResult.data?.length || 0 : 0
+  // Safely extract data with proper error handling
+  const totalEntries = entriesResult.success ? entriesResult.data?.total || 0 : 0
   const totalLogs = logsResult.success ? logsResult.data?.length || 0 : 0
   const totalUsers = usersResult.success ? usersResult.data?.length || 0 : 0
 
-  // Calculate total land area
-  const totalArea = entriesResult.success 
-    ? entriesResult.data?.reduce((sum: number, entry: any) => sum + entry.luas, 0) || 0
-    : 0
+  // Calculate total land area - safely handle the data structure
+  let totalArea = 0
+  if (entriesResult.success && entriesResult.data?.data && Array.isArray(entriesResult.data.data)) {
+    totalArea = entriesResult.data.data.reduce((sum: number, entry: { luas?: number }) => sum + (entry.luas || 0), 0)
+  }
 
   const stats = [
     {
@@ -92,7 +94,7 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {logsResult.data.slice(0, 5).map((log: any) => (
+                {logsResult.data.slice(0, 5).map((log: { id: string; details: string; user: string; createdAt: string }) => (
                   <div key={log.id} className="flex items-center space-x-4">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1 min-w-0">

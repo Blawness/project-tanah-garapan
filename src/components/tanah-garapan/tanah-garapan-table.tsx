@@ -21,7 +21,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { TanahGarapanForm } from './tanah-garapan-form'
-import { MoreHorizontal, Edit, Trash2, ExternalLink, Printer } from 'lucide-react'
+import { FilePreview } from '@/components/shared/file-preview'
+import { MoreHorizontal, Edit, Trash2, ExternalLink, Printer, FileText, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface TanahGarapanTableProps {
@@ -41,6 +42,8 @@ export function TanahGarapanTable({
   const [editEntry, setEditEntry] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [previewFile, setPreviewFile] = useState<{url: string, name: string} | null>(null)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   const canManage = session?.user && canManageData(session.user.role)
 
@@ -93,6 +96,12 @@ export function TanahGarapanTable({
     }
   }
 
+  const handlePreviewFile = (fileUrl: string, fileName: string) => {
+    setPreviewFile({ url: fileUrl, name: fileName })
+    setIsPreviewOpen(true)
+  }
+
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('id-ID')
   }
@@ -118,6 +127,7 @@ export function TanahGarapanTable({
               <TableHead>Letter C</TableHead>
               <TableHead>No. SKG</TableHead>
               <TableHead className="text-right">Luas (m²)</TableHead>
+              <TableHead>File</TableHead>
               <TableHead>Tanggal</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
@@ -125,7 +135,7 @@ export function TanahGarapanTable({
           <TableBody>
             {entries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={9} className="h-24 text-center">
                   Tidak ada data tanah garapan.
                 </TableCell>
               </TableRow>
@@ -153,6 +163,28 @@ export function TanahGarapanTable({
                   <TableCell>{entry.nomorSuratKeteranganGarapan}</TableCell>
                   <TableCell className="text-right">
                     {formatNumber(entry.luas)}
+                  </TableCell>
+                  <TableCell>
+                    {entry.file_url ? (
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePreviewFile(entry.file_url, `file-${entry.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => window.open(entry.file_url, '_blank')}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
                   </TableCell>
                   <TableCell>{formatDate(entry.createdAt)}</TableCell>
                   <TableCell className="text-right">
@@ -217,6 +249,15 @@ export function TanahGarapanTable({
           setEditEntry(null)
         }}
       />
+
+      {previewFile && (
+        <FilePreview
+          open={isPreviewOpen}
+          onOpenChange={setIsPreviewOpen}
+          fileUrl={previewFile.url}
+          fileName={previewFile.name}
+        />
+      )}
     </>
   )
 }

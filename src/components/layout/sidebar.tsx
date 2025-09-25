@@ -13,7 +13,9 @@ import {
   Activity,
   Upload,
   Download,
-  Printer
+  Printer,
+  Building2,
+  ShoppingCart
 } from 'lucide-react'
 
 const navigation = [
@@ -28,6 +30,18 @@ const navigation = [
     href: '/tanah-garapan',
     icon: MapPin,
     roles: ['USER', 'MANAGER', 'ADMIN', 'DEVELOPER']
+  },
+  {
+    name: 'Proyek Pembangunan',
+    href: '/proyek',
+    icon: Building2,
+    roles: ['MANAGER', 'ADMIN', 'DEVELOPER']
+  },
+  {
+    name: 'Pembelian Sertifikat',
+    href: '/pembelian',
+    icon: ShoppingCart,
+    roles: ['MANAGER', 'ADMIN', 'DEVELOPER']
   },
   {
     name: 'Users',

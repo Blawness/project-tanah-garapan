@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { exportTanahGarapanToCSV, getTanahGarapanEntriesByIds } from '@/lib/server-actions/tanah-garapan'
+import { exportTanahGarapanToCSV, getTanahGarapanEntriesByIds, getTanahGarapanEntries } from '@/lib/server-actions/tanah-garapan'
 import { canManageData } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,8 +10,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { Download, FileText, Printer } from 'lucide-react'
+import { Download, FileText, Printer, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ExportButtonProps {
@@ -23,6 +24,8 @@ export function ExportButton({ selectedIds, onPrintSelected }: ExportButtonProps
   const { data: session } = useSession()
   const [isExporting, setIsExporting] = useState(false)
   const [isPrinting, setIsPrinting] = useState(false)
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false)
+  const [locations, setLocations] = useState<string[]>([])
 
   const canManage = session?.user && canManageData(session.user.role)
 
@@ -81,6 +84,34 @@ export function ExportButton({ selectedIds, onPrintSelected }: ExportButtonProps
     }
   }
 
+  const loadLocations = async () => {
+    if (locations.length > 0) return // Already loaded
+    
+    setIsLoadingLocations(true)
+    try {
+      const result = await getTanahGarapanEntries()
+      if (result.success && result.data) {
+        // Extract unique locations
+        const uniqueLocations = [...new Set(
+          result.data.map((entry: any) => entry.letakTanah.split(',')[0].trim())
+        )].sort()
+        setLocations(uniqueLocations)
+      }
+    } catch (error) {
+      toast.error('Gagal memuat daftar lokasi')
+    } finally {
+      setIsLoadingLocations(false)
+    }
+  }
+
+  const handlePrintByLocation = (location: string) => {
+    const encodedLocation = encodeURIComponent(location)
+    const printWindow = window.open(`/garapan/print/group/${encodedLocation}`, '_blank')
+    if (printWindow) {
+      printWindow.focus()
+    }
+  }
+
   if (!canManage) {
     return null
   }
@@ -111,6 +142,31 @@ export function ExportButton({ selectedIds, onPrintSelected }: ExportButtonProps
           <Printer className="mr-2 h-4 w-4" />
           {isPrinting ? 'Mencetak...' : `Print Terpilih (${selectedIds.length})`}
         </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem 
+          onClick={loadLocations}
+          disabled={isLoadingLocations}
+        >
+          <MapPin className="mr-2 h-4 w-4" />
+          {isLoadingLocations ? 'Memuat lokasi...' : 'Print per Lokasi'}
+        </DropdownMenuItem>
+
+        {locations.length > 0 && (
+          <>
+            {locations.map((location) => (
+              <DropdownMenuItem 
+                key={location}
+                onClick={() => handlePrintByLocation(location)}
+                className="pl-8"
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                {location}
+              </DropdownMenuItem>
+            ))}
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

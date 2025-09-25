@@ -46,15 +46,26 @@ export function TanahGarapanForm({
       file_url: entry?.file_url || '',
       keterangan: entry?.keterangan || '',
     },
+    mode: 'onChange'
   })
 
   const onSubmit = async (data: TanahGarapanFormData) => {
     setIsLoading(true)
     
     try {
+      // Clean up data before sending
+      const cleanData = {
+        ...data,
+        file_url: data.file_url && data.file_url.trim() !== '' ? data.file_url.trim() : null,
+        keterangan: data.keterangan && data.keterangan.trim() !== '' ? data.keterangan.trim() : null,
+        luas: Number(data.luas) || 0
+      }
+
+      console.log('Submitting data:', cleanData) // Debug log
+
       const result = isEdit
-        ? await updateTanahGarapanEntry(entry.id, data)
-        : await addTanahGarapanEntry(data)
+        ? await updateTanahGarapanEntry(entry.id, cleanData)
+        : await addTanahGarapanEntry(cleanData)
 
       if (result.success) {
         toast.success(result.message || `Entry ${isEdit ? 'updated' : 'created'} successfully`)
@@ -62,9 +73,11 @@ export function TanahGarapanForm({
         onOpenChange(false)
         onSuccess?.()
       } else {
+        console.error('Server error:', result.error) // Debug log
         toast.error(result.error || 'An error occurred')
       }
     } catch (error) {
+      console.error('Form submission error:', error) // Debug log
       toast.error('An unexpected error occurred')
     } finally {
       setIsLoading(false)

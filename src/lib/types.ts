@@ -7,8 +7,8 @@ export const tanahGarapanSchema = z.object({
   letterC: z.string().min(1, "Letter C is required"),
   nomorSuratKeteranganGarapan: z.string().min(1, "Nomor Surat Keterangan Garapan is required"),
   luas: z.coerce.number().positive({ message: "Luas must be a positive number" }),
-  file_url: z.string().url().optional().nullable(),
-  keterangan: z.string().optional(),
+  file_url: z.string().optional().nullable(),
+  keterangan: z.string().optional().nullable(),
 })
 
 export const userSchema = z.object({
@@ -58,6 +58,59 @@ export interface ActivityLog {
   action: string
   details: string
   payload?: any
+  createdAt: Date
+}
+
+export interface ProyekPembangunan {
+  id: string
+  namaProyek: string
+  lokasiProyek: string
+  deskripsi?: string | null
+  statusProyek: 'PLANNING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
+  tanggalMulai?: Date | null
+  tanggalSelesai?: Date | null
+  budgetTotal: number
+  budgetTerpakai: number
+  createdBy: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface PembelianSertifikat {
+  id: string
+  proyekId: string
+  tanahGarapanId: string
+  namaWarga: string
+  alamatWarga: string
+  noKtpWarga: string
+  noHpWarga: string
+  hargaBeli: number
+  statusPembelian: 'NEGOTIATION' | 'AGREED' | 'CONTRACT_SIGNED' | 'PAID' | 'CERTIFICATE_ISSUED' | 'COMPLETED' | 'CANCELLED'
+  tanggalKontrak?: Date | null
+  tanggalPembayaran?: Date | null
+  metodePembayaran?: 'CASH' | 'TRANSFER' | 'QRIS' | 'E_WALLET' | 'BANK_TRANSFER' | null
+  buktiPembayaran?: string | null
+  keterangan?: string | null
+  nomorSertifikat?: string | null
+  fileSertifikat?: string | null
+  statusSertifikat: 'PENDING' | 'PROCESSING' | 'ISSUED' | 'DELIVERED'
+  createdBy: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface PembayaranPembelian {
+  id: string
+  pembelianId: string
+  nomorPembayaran: string
+  jumlahPembayaran: number
+  jenisPembayaran: 'DP' | 'CICILAN' | 'PELUNASAN' | 'BONUS'
+  metodePembayaran: 'CASH' | 'TRANSFER' | 'QRIS' | 'E_WALLET' | 'BANK_TRANSFER'
+  tanggalPembayaran: Date
+  statusPembayaran: 'PENDING' | 'VERIFIED' | 'REJECTED'
+  buktiPembayaran?: string | null
+  keterangan?: string | null
+  createdBy: string
   createdAt: Date
 }
 

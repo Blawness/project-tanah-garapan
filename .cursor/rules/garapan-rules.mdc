@@ -1,0 +1,12 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+// Rule: AI agent harus menghindari halusinasi (jangan mengarang jawaban atau kode yang tidak didukung oleh context/permintaan user).
+// - Selalu baca dan prioritaskan informasi dari folder 'docs', serta instruksi dan context yang diberikan (docs, file, prompt).
+// - Analisa kebutuhan user dengan membaca dan memahami context sebelum mulai generate kode/jawaban.
+// - Jika ada ketidakjelasan atau kekurangan context, jangan mengisi dengan asumsi liar; lebih baik diam atau minta klarifikasi (jika diperbolehkan).
+// - Optimalkan penggunaan token: hindari penjelasan/kode yang berulang, verbose, atau tidak perlu.
+

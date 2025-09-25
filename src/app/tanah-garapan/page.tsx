@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { getTanahGarapanEntries, searchTanahGarapanEntries } from '@/lib/server-actions/tanah-garapan'
+import { getTanahGarapanEntries, searchTanahGarapanEntries, advancedSearchTanahGarapanEntries } from '@/lib/server-actions/tanah-garapan'
 import { canManageData } from '@/lib/auth'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { TanahGarapanForm } from '@/components/tanah-garapan/tanah-garapan-form'
 import { TanahGarapanTable } from '@/components/tanah-garapan/tanah-garapan-table'
 import { ExportButton } from '@/components/tanah-garapan/export-button'
+import { AdvancedSearch } from '@/components/tanah-garapan/advanced-search'
+import { DataPagination } from '@/components/shared/data-pagination'
 import { Plus, Search, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -22,15 +24,37 @@ export default function TanahGarapanPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [locations, setLocations] = useState<string[]>([])
+  const [isAdvancedSearch, setIsAdvancedSearch] = useState(false)
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    pageSize: 20,
+    totalItems: 0
+  })
 
   const canManage = session?.user && canManageData(session.user.role)
 
-  const fetchEntries = async () => {
+  const fetchEntries = async (page: number = pagination.currentPage, pageSize: number = pagination.pageSize) => {
     setIsLoading(true)
     try {
-      const result = await getTanahGarapanEntries()
-      if (result.success) {
-        setEntries(result.data || [])
+      const result = await getTanahGarapanEntries(page, pageSize)
+      if (result.success && result.data) {
+        setEntries(result.data.data || [])
+        setPagination({
+          currentPage: result.data.currentPage,
+          totalPages: result.data.totalPages,
+          pageSize: result.data.pageSize,
+          totalItems: result.data.total
+        })
+        // Extract unique locations from all data (not just current page)
+        const allEntriesResult = await getTanahGarapanEntries(1, 1000) // Get all for locations
+        if (allEntriesResult.success && allEntriesResult.data) {
+          const uniqueLocations = [...new Set(
+            (allEntriesResult.data.data || []).map((entry: any) => entry.letakTanah.split(',')[0].trim())
+          )].sort()
+          setLocations(uniqueLocations)
+        }
       } else {
         toast.error(result.error || 'Failed to fetch entries')
       }
@@ -64,11 +88,39 @@ export default function TanahGarapanPage() {
 
   const handleRefresh = () => {
     setSelectedIds([])
-    if (searchQuery.trim()) {
-      handleSearch()
-    } else {
-      fetchEntries()
+    setSearchQuery('')
+    setIsAdvancedSearch(false)
+    fetchEntries()
+  }
+
+  const handleAdvancedSearch = async (filters: any) => {
+    setIsSearching(true)
+    setIsAdvancedSearch(true)
+    try {
+      const result = await advancedSearchTanahGarapanEntries(filters)
+      if (result.success) {
+        setEntries(result.data || [])
+      } else {
+        toast.error(result.error || 'Advanced search failed')
+      }
+    } catch (error) {
+      toast.error('Advanced search failed')
+    } finally {
+      setIsSearching(false)
     }
+  }
+
+  const handleClearAdvancedSearch = () => {
+    setIsAdvancedSearch(false)
+    fetchEntries()
+  }
+
+  const handlePageChange = (page: number) => {
+    fetchEntries(page, pagination.pageSize)
+  }
+
+  const handlePageSizeChange = (pageSize: number) => {
+    fetchEntries(1, pageSize)
   }
 
   // Initial data fetch
@@ -149,7 +201,14 @@ export default function TanahGarapanPage() {
           </Card>
         </div>
 
-        {/* Search and Actions */}
+        {/* Advanced Search */}
+        <AdvancedSearch
+          onSearch={handleAdvancedSearch}
+          onClear={handleClearAdvancedSearch}
+          locations={locations}
+        />
+
+        {/* Basic Search and Actions */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center space-x-2">
@@ -207,6 +266,16 @@ export default function TanahGarapanPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Pagination */}
+        <DataPagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       </div>
 
       {/* Add Form Dialog */}

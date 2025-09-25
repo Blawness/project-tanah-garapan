@@ -80,62 +80,120 @@ export default function PrintSinglePage({ params }: PrintSinglePageProps) {
       `}</style>
 
       <div className="max-w-4xl mx-auto print-page">
-        {/* Header */}
+        {/* Letterhead */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            SURAT KETERANGAN TANAH GARAPAN
-          </h1>
-          <p className="text-gray-600">
-            Nomor: {entry.nomorSuratKeteranganGarapan}
-          </p>
-          <Separator className="my-4" />
+          {/* Official Letterhead */}
+          <div className="border-2 border-gray-800 p-6 mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              PEMERINTAH DESA/KELURAHAN
+            </h1>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+              [NAMA DESA/KELURAHAN]
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Alamat: [ALAMAT LENGKAP DESA/KELURAHAN]<br />
+              Telp: [NOMOR TELEPON] | Email: [EMAIL]
+            </p>
+            <Separator className="my-4" />
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              SURAT KETERANGAN TANAH GARAPAN
+            </h3>
+            <p className="text-gray-600">
+              Nomor: {entry.nomorSuratKeteranganGarapan}
+            </p>
+          </div>
         </div>
 
         {/* Content */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Informasi Tanah</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Letak Tanah</label>
-                  <p className="text-lg font-medium">{entry.letakTanah}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Letter C</label>
-                  <p className="text-lg font-medium">{entry.letterC}</p>
-                </div>
-              </div>
+          {/* Opening Statement */}
+          <div className="text-justify mb-6">
+            <p className="text-base leading-relaxed">
+              Yang bertanda tangan di bawah ini, Kepala Desa/Kelurahan <strong>[NAMA DESA/KELURAHAN]</strong>, 
+              dengan ini menerangkan bahwa:
+            </p>
+          </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Nama Pemegang Hak</label>
-                  <p className="text-lg font-medium">{entry.namaPemegangHak}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Luas Tanah</label>
-                  <p className="text-lg font-medium">{formatNumber(entry.luas)} m²</p>
-                </div>
-              </div>
+          {/* Data Table */}
+          <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <table className="w-full border-collapse">
+              <tbody>
+                <tr className="border-b border-gray-300">
+                  <td className="border-r border-gray-300 px-4 py-3 font-medium bg-gray-50 w-1/3">
+                    Nama Pemegang Hak
+                  </td>
+                  <td className="px-4 py-3">
+                    <strong>{entry.namaPemegangHak}</strong>
+                  </td>
+                </tr>
+                <tr className="border-b border-gray-300">
+                  <td className="border-r border-gray-300 px-4 py-3 font-medium bg-gray-50">
+                    Letak Tanah
+                  </td>
+                  <td className="px-4 py-3">
+                    {entry.letakTanah}
+                  </td>
+                </tr>
+                <tr className="border-b border-gray-300">
+                  <td className="border-r border-gray-300 px-4 py-3 font-medium bg-gray-50">
+                    Letter C
+                  </td>
+                  <td className="px-4 py-3">
+                    {entry.letterC}
+                  </td>
+                </tr>
+                <tr className="border-b border-gray-300">
+                  <td className="border-r border-gray-300 px-4 py-3 font-medium bg-gray-50">
+                    No. Surat Keterangan Garapan
+                  </td>
+                  <td className="px-4 py-3">
+                    {entry.nomorSuratKeteranganGarapan}
+                  </td>
+                </tr>
+                <tr className="border-b border-gray-300">
+                  <td className="border-r border-gray-300 px-4 py-3 font-medium bg-gray-50">
+                    Luas Tanah
+                  </td>
+                  <td className="px-4 py-3">
+                    <strong>{formatNumber(entry.luas)} m²</strong>
+                  </td>
+                </tr>
+                {entry.keterangan && (
+                  <tr>
+                    <td className="border-r border-gray-300 px-4 py-3 font-medium bg-gray-50">
+                      Keterangan
+                    </td>
+                    <td className="px-4 py-3">
+                      {entry.keterangan}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-              {entry.keterangan && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Keterangan</label>
-                  <p className="text-base">{entry.keterangan}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Closing Statement */}
+          <div className="text-justify mb-6">
+            <p className="text-base leading-relaxed">
+              Demikian surat keterangan ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.
+            </p>
+          </div>
 
           {/* Footer */}
-          <div className="mt-12 text-right">
-            <div className="inline-block text-center">
-              <p className="mb-16">Ditetapkan di: ........................</p>
-              <p className="mb-16">Pada tanggal: {formatDate(new Date().toISOString())}</p>
-              <div className="border-b border-gray-400 w-48 mx-auto mb-2"></div>
-              <p className="text-sm font-medium">Kepala Desa/Lurah</p>
+          <div className="mt-12">
+            <div className="flex justify-between items-end">
+              <div className="text-left">
+                <p className="mb-4">Ditetapkan di: [NAMA DESA/KELURAHAN]</p>
+                <p>Pada tanggal: {formatDate(new Date().toISOString())}</p>
+              </div>
+              <div className="text-center">
+                <div className="mb-16">
+                  <p className="text-sm text-gray-600 mb-2">Kepala Desa/Kelurahan</p>
+                  <div className="border-b border-gray-400 w-48 mx-auto mb-2"></div>
+                  <p className="text-sm font-medium">[NAMA KEPALA DESA/KELURAHAN]</p>
+                  <p className="text-xs text-gray-500">NIP. [NIP KEPALA DESA/KELURAHAN]</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

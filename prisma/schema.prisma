@@ -36,6 +36,9 @@ model TanahGarapanEntry {
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
 
+  // Relations
+  pembelianSertifikat         PembelianSertifikat[]
+
   @@index([letakTanah])
   @@index([namaPemegangHak])
   @@index([luas])
@@ -52,10 +55,101 @@ model ActivityLog {
   payload   Json?
   createdAt DateTime @default(now())
 
+  // Relations
+  proyekPembangunanId   String?
+  proyekPembangunan     ProyekPembangunan? @relation(fields: [proyekPembangunanId], references: [id])
+  pembelianSertifikatId String?
+  pembelianSertifikat   PembelianSertifikat? @relation(fields: [pembelianSertifikatId], references: [id])
+  pembayaranPembelianId String?
+  pembayaranPembelian   PembayaranPembelian? @relation(fields: [pembayaranPembelianId], references: [id])
+
   @@index([user])
   @@index([action])
   @@index([createdAt])
   @@map("activity_logs")
+}
+
+// Proyek Pembangunan
+model ProyekPembangunan {
+  id                    String   @id @default(cuid())
+  namaProyek            String
+  lokasiProyek          String
+  deskripsi             String?  @db.Text
+  statusProyek          StatusProyek @default(PLANNING)
+  tanggalMulai          DateTime?
+  tanggalSelesai        DateTime?
+  budgetTotal           Decimal  @db.Decimal(15,2)
+  budgetTerpakai        Decimal  @db.Decimal(15,2) @default(0)
+  createdBy             String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  pembelianSertifikat   PembelianSertifikat[]
+  activityLogs          ActivityLog[]
+
+  @@map("proyek_pembangunan")
+}
+
+// Pembelian Sertifikat dari Warga
+model PembelianSertifikat {
+  id                    String   @id @default(cuid())
+  proyekId              String
+  proyek                ProyekPembangunan @relation(fields: [proyekId], references: [id])
+  tanahGarapanId        String
+  tanahGarapan          TanahGarapanEntry @relation(fields: [tanahGarapanId], references: [id])
+  
+  // Data Warga (pemilik asli)
+  namaWarga             String
+  alamatWarga           String
+  noKtpWarga            String
+  noHpWarga             String
+  
+  // Data Pembelian
+  hargaBeli             Decimal  @db.Decimal(15,2)
+  statusPembelian       StatusPembelian @default(NEGOTIATION)
+  tanggalKontrak        DateTime?
+  tanggalPembayaran     DateTime?
+  metodePembayaran      MetodePembayaran?
+  buktiPembayaran       String?
+  keterangan            String?  @db.Text
+  
+  // Data Sertifikat
+  nomorSertifikat       String?  @unique
+  fileSertifikat        String?
+  statusSertifikat      StatusSertifikat @default(PENDING)
+  
+  createdBy             String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  pembayaran            PembayaranPembelian[]
+  activityLogs          ActivityLog[]
+
+  @@map("pembelian_sertifikat")
+}
+
+// Pencatatan Pembayaran ke Warga
+model PembayaranPembelian {
+  id                    String   @id @default(cuid())
+  pembelianId           String
+  pembelian             PembelianSertifikat @relation(fields: [pembelianId], references: [id])
+  nomorPembayaran       String   @unique
+  jumlahPembayaran      Decimal  @db.Decimal(15,2)
+  jenisPembayaran       JenisPembayaran
+  metodePembayaran      MetodePembayaran
+  tanggalPembayaran     DateTime
+  statusPembayaran      StatusPembayaran @default(PENDING)
+  buktiPembayaran       String?
+  keterangan            String?  @db.Text
+  createdBy             String
+  createdAt             DateTime @default(now())
+
+  // Relations
+  activityLogs          ActivityLog[]
+
+  @@map("pembayaran_pembelian")
 }
 
 // User roles
@@ -64,4 +158,55 @@ enum UserRole {
   ADMIN
   MANAGER
   USER
+}
+
+// Proyek status
+enum StatusProyek {
+  PLANNING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+// Status pembelian
+enum StatusPembelian {
+  NEGOTIATION
+  AGREED
+  CONTRACT_SIGNED
+  PAID
+  CERTIFICATE_ISSUED
+  COMPLETED
+  CANCELLED
+}
+
+// Status sertifikat
+enum StatusSertifikat {
+  PENDING
+  PROCESSING
+  ISSUED
+  DELIVERED
+}
+
+// Jenis pembayaran
+enum JenisPembayaran {
+  DP
+  CICILAN
+  PELUNASAN
+  BONUS
+}
+
+// Metode pembayaran
+enum MetodePembayaran {
+  CASH
+  TRANSFER
+  QRIS
+  E_WALLET
+  BANK_TRANSFER
+}
+
+// Status pembayaran
+enum StatusPembayaran {
+  PENDING
+  VERIFIED
+  REJECTED
 }
