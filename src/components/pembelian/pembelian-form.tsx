@@ -16,16 +16,24 @@ import { toast } from 'sonner'
 import { FileUpload } from '@/components/shared/file-upload'
 
 const pembelianSchema = z.object({
-  proyekId: z.string().min(1, 'Proyek ID is required'),
+  proyekId: z.string().min(1, 'Proyek Pembangunan wajib dipilih'),
   tanahGarapanId: z.string().min(1, 'Tanah Garapan is required'),
   namaWarga: z.string().min(1, 'Nama Warga is required'),
   alamatWarga: z.string().min(1, 'Alamat Warga is required'),
-  noKtpWarga: z.string().min(16, 'No KTP must be 16 digits').max(16, 'No KTP must be 16 digits'),
+  noKtpWarga: z.string().min(15, 'No KTP must be 15 or 16 digits').max(16, 'No KTP must be 15 or 16 digits'),
   noHpWarga: z.string().min(1, 'No HP is required'),
   hargaBeli: z.coerce.number().positive('Harga must be positive'),
   statusPembelian: z.enum(['NEGOTIATION', 'AGREED', 'CONTRACT_SIGNED', 'PAID', 'CERTIFICATE_ISSUED', 'COMPLETED', 'CANCELLED']),
-  tanggalKontrak: z.string().optional(),
-  tanggalPembayaran: z.string().optional(),
+  tanggalKontrak: z.string().optional().nullable().refine((val) => {
+    if (!val) return true
+    const date = new Date(val)
+    return !isNaN(date.getTime())
+  }, 'Tanggal Kontrak harus dalam format yang valid (YYYY-MM-DD)'),
+  tanggalPembayaran: z.string().optional().nullable().refine((val) => {
+    if (!val) return true
+    const date = new Date(val)
+    return !isNaN(date.getTime())
+  }, 'Tanggal Pembayaran harus dalam format yang valid (YYYY-MM-DD)'),
   metodePembayaran: z.enum(['CASH', 'TRANSFER', 'QRIS', 'E_WALLET', 'BANK_TRANSFER']).optional(),
   buktiPembayaran: z.string().optional(),
   keterangan: z.string().optional(),
@@ -74,6 +82,12 @@ export function PembelianForm({
     namaPemegangHak: string
     luas: number
   }>>([])
+  const [availableProyek, setAvailableProyek] = useState<Array<{
+    id: string
+    namaProyek: string
+    lokasiProyek: string
+  }>>([])
+  const [isLoadingProyek, setIsLoadingProyek] = useState(false)
   const isEdit = !!pembelian
 
   const form = useForm<PembelianFormData>({
@@ -87,6 +101,7 @@ export function PembelianForm({
       noHpWarga: pembelian?.noHpWarga || '',
       hargaBeli: pembelian?.hargaBeli || 0,
       statusPembelian: pembelian?.statusPembelian || 'NEGOTIATION',
+      statusSertifikat: pembelian?.statusSertifikat || 'PENDING',
       tanggalKontrak: pembelian?.tanggalKontrak ? new Date(pembelian.tanggalKontrak).toISOString().split('T')[0] : '',
       tanggalPembayaran: pembelian?.tanggalPembayaran ? new Date(pembelian.tanggalPembayaran).toISOString().split('T')[0] : '',
       metodePembayaran: pembelian?.metodePembayaran || 'CASH',
@@ -96,14 +111,22 @@ export function PembelianForm({
       fileSertifikat: pembelian?.fileSertifikat || '',
       statusSertifikat: pembelian?.statusSertifikat || 'PENDING'
     },
-    mode: 'onChange'
+    mode: 'onSubmit'
   })
 
   useEffect(() => {
-    if (open && !isEdit) {
+    if (open) {
       loadAvailableTanahGarapan()
+      loadAvailableProyek()
     }
-  }, [open, isEdit])
+  }, [open])
+
+  // Update form when proyekId prop changes
+  useEffect(() => {
+    if (proyekId) {
+      form.setValue('proyekId', proyekId)
+    }
+  }, [proyekId, form])
 
   const loadAvailableTanahGarapan = async () => {
     try {
@@ -113,6 +136,25 @@ export function PembelianForm({
       }
     } catch (error) {
       console.error('Error loading tanah garapan:', error)
+    }
+  }
+
+  const loadAvailableProyek = async () => {
+    setIsLoadingProyek(true)
+    try {
+      const response = await fetch('/api/proyek?limit=100')
+      const result = await response.json()
+      if (result.success && result.data) {
+        setAvailableProyek(result.data.data || [])
+      } else {
+        console.error('Failed to load projects:', result.error)
+        setAvailableProyek([])
+      }
+    } catch (error) {
+      console.error('Error loading proyek:', error)
+      setAvailableProyek([])
+    } finally {
+      setIsLoadingProyek(false)
     }
   }
 
@@ -139,6 +181,7 @@ export function PembelianForm({
         onOpenChange(false)
         onSuccess?.()
       } else {
+        console.error('API Error Response:', result)
         toast.error(result.error || 'An error occurred')
       }
     } catch (error) {
@@ -160,7 +203,15 @@ export function PembelianForm({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+            console.log('Form validation errors:', errors)
+            const firstError = Object.values(errors)[0]
+            if (firstError?.message) {
+              toast.error(firstError.message)
+            } else {
+              toast.error('Please fix the validation errors before submitting')
+            }
+          })} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Informasi Dasar</h3>
@@ -168,11 +219,46 @@ export function PembelianForm({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
+                  name="proyekId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Proyek Pembangunan</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={isLoadingProyek ? "Memuat proyek..." : (field.value ? "Proyek dipilih" : "Pilih proyek pembangunan")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {isLoadingProyek ? (
+                            <div className="py-2 px-2 text-sm text-gray-500 text-center">
+                              Memuat proyek...
+                            </div>
+                          ) : availableProyek.length > 0 ? (
+                            availableProyek.map((proyek) => (
+                              <SelectItem key={proyek.id} value={proyek.id}>
+                                {proyek.namaProyek} - {proyek.lokasiProyek}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="py-2 px-2 text-sm text-gray-500 text-center">
+                              Tidak ada proyek tersedia
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="tanahGarapanId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tanah Garapan</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Pilih tanah garapan" />
@@ -197,7 +283,7 @@ export function PembelianForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status Pembelian</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Pilih status" />
@@ -238,6 +324,7 @@ export function PembelianForm({
                     </FormItem>
                   )}
                 />
+
 
                 <FormField
                   control={form.control}
@@ -312,7 +399,7 @@ export function PembelianForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Metode Pembayaran</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Pilih metode" />
@@ -390,7 +477,7 @@ export function PembelianForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status Sertifikat</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Pilih status" />
