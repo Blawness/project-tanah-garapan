@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { addPembelianSertifikat, updatePembelianSertifikat, PembelianFormData } from '@/lib/server-actions/pembelian'
+import { PembelianFormData } from '@/lib/server-actions/pembelian'
 import { getTanahGarapanAvailable } from '@/lib/server-actions/pembelian'
 import { toast } from 'sonner'
 import { FileUpload } from '@/components/shared/file-upload'
@@ -120,9 +120,18 @@ export function PembelianForm({
     setIsLoading(true)
 
     try {
-      const result = isEdit
-        ? await updatePembelianSertifikat(pembelian.id, data)
-        : await addPembelianSertifikat(data)
+      const url = isEdit ? `/api/pembelian/${pembelian.id}` : '/api/pembelian'
+      const method = isEdit ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
 
       if (result.success) {
         toast.success(result.message || `Pembelian ${isEdit ? 'updated' : 'created'} successfully`)

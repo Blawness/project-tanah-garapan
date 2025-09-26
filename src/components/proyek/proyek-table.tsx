@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { MoreHorizontal, Edit, Trash2, Eye, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash2, Eye, Plus, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ProyekForm } from './proyek-form'
 import { deleteProyekPembangunan } from '@/lib/server-actions/proyek'
@@ -30,7 +30,7 @@ interface ProyekTableProps {
     pembelianSertifikat?: Array<any>
   }>
   onRefresh: () => void
-  onCreateNew: () => void
+  onCreateNew: (proyekId?: string) => void
   pagination?: {
     currentPage: number
     totalPages: number
@@ -149,7 +149,11 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem onClick={() => onCreateNew(proyek.id)}>
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          Tambah Pembelian
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => handleDelete(proyek.id, proyek.namaProyek)}
                           className="text-red-600"
                         >

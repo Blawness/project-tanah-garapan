@@ -55,6 +55,7 @@ export default function ProyekPage() {
     pageSize: number
   } | null>(null)
   const [activeTab, setActiveTab] = useState('proyek')
+  const [selectedProyekForPembelian, setSelectedProyekForPembelian] = useState<string | null>(null)
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -157,7 +158,10 @@ export default function ProyekPage() {
     setIsFormOpen(true)
   }
 
-  const handleCreateNewPembelian = () => {
+  const handleCreateNewPembelian = (proyekId?: string) => {
+    if (proyekId) {
+      setSelectedProyekForPembelian(proyekId)
+    }
     setIsPembelianFormOpen(true)
   }
 
@@ -368,8 +372,10 @@ export default function ProyekPage() {
         <PembelianForm
           open={isPembelianFormOpen}
           onOpenChange={setIsPembelianFormOpen}
+          proyekId={selectedProyekForPembelian}
           onSuccess={() => {
             setIsPembelianFormOpen(false)
+            setSelectedProyekForPembelian(null)
             loadPembelianData()
           }}
         />

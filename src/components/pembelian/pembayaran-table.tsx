@@ -10,7 +10,7 @@ import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 
 interface PembayaranTableProps {
-  data: Array<{
+  data?: Array<{
     id: string
     pembelianId: string
     nomorPembayaran: string
@@ -23,7 +23,7 @@ interface PembayaranTableProps {
     keterangan?: string
   }>
   pembelianId: string
-  onRefresh: () => void
+  onRefresh?: () => void
 }
 
 const statusColors = {
@@ -55,6 +55,11 @@ const metodeLabels = {
 
 export function PembayaranTable({ data, pembelianId, onRefresh }: PembayaranTableProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
+
+  // Default refresh function if not provided
+  const defaultRefresh = () => {
+    window.location.reload()
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -133,7 +138,7 @@ export function PembayaranTable({ data, pembelianId, onRefresh }: PembayaranTabl
         pembelianId={pembelianId}
         onSuccess={() => {
           setIsFormOpen(false)
-          onRefresh()
+          onRefresh ? onRefresh() : defaultRefresh()
         }}
       />
     </>

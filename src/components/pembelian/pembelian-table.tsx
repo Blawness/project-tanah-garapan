@@ -47,8 +47,8 @@ interface PembelianTableProps {
     }
     pembayaran?: Array<any>
   }>
-  onRefresh: () => void
-  onCreateNew: (proyekId?: string) => void
+  onRefresh?: () => void
+  onCreateNew?: (proyekId?: string) => void
   pagination?: {
     currentPage: number
     totalPages: number
@@ -96,6 +96,11 @@ export function PembelianTable({
   const [pembelianData, setPembelianData] = useState<PembelianTableProps['data']>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  // Default refresh function if not provided
+  const defaultRefresh = () => {
+    loadPembelianData()
+  }
+
   useEffect(() => {
     loadPembelianData()
   }, [refreshTrigger])
@@ -125,7 +130,7 @@ export function PembelianTable({
       const result = await deletePembelianSertifikat(id)
       if (result.success) {
         toast.success('Pembelian berhasil dihapus')
-        loadPembelianData()
+        onRefresh ? onRefresh() : defaultRefresh()
       } else {
         toast.error(result.error || 'Gagal menghapus pembelian')
       }
@@ -155,10 +160,12 @@ export function PembelianTable({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Pembelian Sertifikat</CardTitle>
-          <Button onClick={() => onCreateNew(proyekId)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Tambah Pembelian
-          </Button>
+          {onCreateNew && (
+            <Button onClick={() => onCreateNew(proyekId)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Pembelian
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <Table>
@@ -302,7 +309,7 @@ export function PembelianTable({
         onSuccess={() => {
           setIsEditDialogOpen(false)
           setEditingPembelian(null)
-          loadPembelianData()
+          onRefresh ? onRefresh() : defaultRefresh()
         }}
       />
 
