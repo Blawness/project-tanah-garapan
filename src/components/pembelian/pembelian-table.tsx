@@ -1,153 +1,87 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import {
-  Search,
-  Filter,
-  Plus,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Trash2,
-  Download,
-  Calculator,
-  Receipt,
-  Calendar,
-  MapPin,
-  User,
-  Phone,
-  Mail,
-  CreditCard,
-  FileText,
-  PlusCircle
-} from 'lucide-react'
-import { getPembelianSertifikat, deletePembelianSertifikat } from '@/lib/server-actions/pembelian'
+import { MoreHorizontal, Edit, Trash2, Eye, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { PembelianForm } from './pembelian-form'
 import { PembayaranTable } from './pembayaran-table'
-import { ExportButton } from './export-button'
+import { deletePembelianSertifikat } from '@/lib/server-actions/pembelian'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 
 interface PembelianTableProps {
-  refreshTrigger?: number
+  data: any[]
+  onRefresh: () => void
+  onCreateNew: (proyekId?: string) => void
+  pagination?: {
+    currentPage: number
+    totalPages: number
+    total: number
+    pageSize: number
+  }
+  onPageChange?: (page: number) => void
+  proyekId?: string
 }
 
-export function PembelianTable({ refreshTrigger }: PembelianTableProps) {
-  const [pembelian, setPembelian] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('ALL')
-  const [proyekFilter, setProyekFilter] = useState('ALL')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalItems, setTotalItems] = useState(0)
-  const [isFormOpen, setIsFormOpen] = useState(false)
+const statusColors = {
+  NEGOTIATION: 'bg-yellow-100 text-yellow-800',
+  AGREED: 'bg-blue-100 text-blue-800',
+  CONTRACT_SIGNED: 'bg-purple-100 text-purple-800',
+  PAID: 'bg-green-100 text-green-800',
+  CERTIFICATE_ISSUED: 'bg-indigo-100 text-indigo-800',
+  COMPLETED: 'bg-gray-100 text-gray-800',
+  CANCELLED: 'bg-red-100 text-red-800'
+}
+
+const statusLabels = {
+  NEGOTIATION: 'Negotiation',
+  AGREED: 'Agreed',
+  CONTRACT_SIGNED: 'Contract Signed',
+  PAID: 'Paid',
+  CERTIFICATE_ISSUED: 'Certificate Issued',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled'
+}
+
+export function PembelianTable({
+  data,
+  onRefresh,
+  onCreateNew,
+  pagination,
+  onPageChange,
+  proyekId
+}: PembelianTableProps) {
   const [editingPembelian, setEditingPembelian] = useState<any>(null)
-  const [proyekList, setProyekList] = useState<any[]>([])
-  const [detailOpen, setDetailOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
   const [selectedPembelian, setSelectedPembelian] = useState<any>(null)
-
-  const pageSize = 10
-
-  useEffect(() => {
-    loadPembelian()
-  }, [currentPage, searchTerm, statusFilter, proyekFilter, refreshTrigger])
-
-  const loadPembelian = async () => {
-    setLoading(true)
-    try {
-      const result = await getPembelianSertifikat(currentPage, pageSize)
-      if (result.success && result.data) {
-        setPembelian(result.data.data)
-        setTotalPages(result.data.totalPages)
-        setTotalItems(result.data.total)
-        // Extract unique proyek for filter
-        const uniqueProyek = Array.from(
-          new Set(result.data.data.map((p: any) => p.proyek?.namaProyek).filter(Boolean))
-        ).map(nama => result.data.data.find((p: any) => p.proyek?.namaProyek === nama)?.proyek)
-        setProyekList(uniqueProyek)
-      }
-    } catch (error) {
-      console.error('Error loading pembelian:', error)
-      toast.error('Gagal memuat data pembelian')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleDelete = async (id: string, namaWarga: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus pembelian untuk ${namaWarga}?`)) {
-      return
-    }
-
-    try {
-      const result = await deletePembelianSertifikat(id)
-      if (result.success) {
-        toast.success('Pembelian berhasil dihapus')
-        loadPembelian()
-      } else {
-        toast.error(result.error || 'Gagal menghapus pembelian')
-      }
-    } catch (error) {
-      console.error('Error deleting pembelian:', error)
-      toast.error('Terjadi kesalahan saat menghapus')
-    }
-  }
 
   const handleEdit = (pembelian: any) => {
     setEditingPembelian(pembelian)
-    setIsFormOpen(true)
+    setIsEditDialogOpen(true)
   }
 
-  const handleFormSuccess = () => {
-    setIsFormOpen(false)
-    setEditingPembelian(null)
-    loadPembelian()
+  const handleDelete = async (id: string, namaWarga: string) => {
+    if (confirm(`Apakah Anda yakin ingin menghapus pembelian dari "${namaWarga}"?`)) {
+      const result = await deletePembelianSertifikat(id)
+      if (result.success) {
+        toast.success('Pembelian berhasil dihapus')
+        onRefresh()
+      } else {
+        toast.error(result.error || 'Gagal menghapus pembelian')
+      }
+    }
   }
 
   const handleViewDetail = (pembelian: any) => {
     setSelectedPembelian(pembelian)
-    setDetailOpen(true)
-  }
-
-  const handleDetailClose = () => {
-    setDetailOpen(false)
-    setSelectedPembelian(null)
-  }
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      NEGOTIATION: 'bg-yellow-100 text-yellow-800',
-      AGREED: 'bg-blue-100 text-blue-800',
-      CONTRACT_SIGNED: 'bg-purple-100 text-purple-800',
-      PAID: 'bg-green-100 text-green-800',
-      CERTIFICATE_ISSUED: 'bg-indigo-100 text-indigo-800',
-      COMPLETED: 'bg-gray-100 text-gray-800',
-      CANCELLED: 'bg-red-100 text-red-800'
-    }
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getStatusLabel = (status: string) => {
-    const labels = {
-      NEGOTIATION: 'Negosiasi',
-      AGREED: 'Disepakati',
-      CONTRACT_SIGNED: 'Kontrak Ditandatangani',
-      PAID: 'Dibayar',
-      CERTIFICATE_ISSUED: 'Sertifikat Diterbitkan',
-      COMPLETED: 'Selesai',
-      CANCELLED: 'Dibatalkan'
-    }
-    return labels[status as keyof typeof labels] || status
+    setIsDetailDialogOpen(true)
   }
 
   const formatCurrency = (amount: number) => {
@@ -158,229 +92,136 @@ export function PembelianTable({ refreshTrigger }: PembelianTableProps) {
     }).format(amount)
   }
 
-  const filteredPembelian = pembelian.filter(p => {
-    const matchesSearch = p.namaWarga.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.tanahGarapan?.letakTanah.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.proyek?.namaProyek.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'ALL' || p.statusPembelian === statusFilter
-    const matchesProyek = proyekFilter === 'ALL' || p.proyek?.namaProyek === proyekFilter
-    return matchesSearch && matchesStatus && matchesProyek
-  })
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5" />
-            Data Pembelian Sertifikat
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-32">
-            <div className="text-muted-foreground">Memuat data...</div>
-          </div>
-        </CardContent>
-      </Card>
-    )
+  const formatDate = (date: string | Date) => {
+    if (!date) return '-'
+    return format(new Date(date), 'dd MMM yyyy', { locale: id })
   }
 
   return (
     <>
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" />
-              <CardTitle>Data Pembelian Sertifikat</CardTitle>
-              <Badge variant="secondary">{totalItems}</Badge>
-            </div>
-            <div className="flex gap-2">
-              <ExportButton />
-              <Button onClick={() => setIsFormOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Tambah Pembelian
-              </Button>
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Pembelian Sertifikat</CardTitle>
+          <Button onClick={() => onCreateNew(proyekId)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Tambah Pembelian
+          </Button>
         </CardHeader>
         <CardContent>
-          {/* Search and Filter */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Cari nama warga, lokasi tanah, atau nama proyek..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Semua Status</SelectItem>
-                <SelectItem value="NEGOTIATION">Negosiasi</SelectItem>
-                <SelectItem value="AGREED">Disepakati</SelectItem>
-                <SelectItem value="CONTRACT_SIGNED">Kontrak Ditandatangani</SelectItem>
-                <SelectItem value="PAID">Dibayar</SelectItem>
-                <SelectItem value="CERTIFICATE_ISSUED">Sertifikat Diterbitkan</SelectItem>
-                <SelectItem value="COMPLETED">Selesai</SelectItem>
-                <SelectItem value="CANCELLED">Dibatalkan</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={proyekFilter} onValueChange={setProyekFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter Proyek" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Semua Proyek</SelectItem>
-                {proyekList.map((proyek) => (
-                  <SelectItem key={proyek?.id} value={proyek?.namaProyek}>
-                    {proyek?.namaProyek}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Table */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Warga & Tanah</TableHead>
-                  <TableHead>Proyek</TableHead>
-                  <TableHead>Harga & Status</TableHead>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead className="w-12">Aksi</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nama Warga</TableHead>
+                <TableHead>Tanah Garapan</TableHead>
+                <TableHead>Harga Beli</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Metode Pembayaran</TableHead>
+                <TableHead>Tanggal Kontrak</TableHead>
+                <TableHead>Tanggal Pembayaran</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((pembelian) => (
+                <TableRow key={pembelian.id}>
+                  <TableCell className="font-medium">{pembelian.namaWarga}</TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{pembelian.tanahGarapan?.letakTanah}</div>
+                      <div className="text-sm text-gray-500">{pembelian.tanahGarapan?.namaPemegangHak}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{formatCurrency(Number(pembelian.hargaBeli))}</TableCell>
+                  <TableCell>
+                    <Badge className={statusColors[pembelian.statusPembelian as keyof typeof statusColors]}>
+                      {statusLabels[pembelian.statusPembelian as keyof typeof statusLabels]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{pembelian.metodePembayaran || '-'}</TableCell>
+                  <TableCell>{formatDate(pembelian.tanggalKontrak)}</TableCell>
+                  <TableCell>{formatDate(pembelian.tanggalPembayaran)}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewDetail(pembelian)}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          Lihat Detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(pembelian)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(pembelian.id, pembelian.namaWarga)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Hapus
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPembelian.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      {searchTerm || statusFilter !== 'ALL' || proyekFilter !== 'ALL'
-                        ? 'Tidak ada data yang sesuai dengan filter'
-                        : 'Belum ada data pembelian sertifikat'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredPembelian.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{p.namaWarga}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <MapPin className="h-3 w-3" />
-                            {p.tanahGarapan?.letakTanah}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Phone className="h-3 w-3" />
-                            {p.noHpWarga}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium">{p.proyek?.namaProyek}</div>
-                          <div className="text-sm text-muted-foreground">{p.proyek?.lokasiProyek}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-2">
-                          <div className="font-medium">{formatCurrency(Number(p.hargaBeli))}</div>
-                          <Badge className={getStatusColor(p.statusPembelian)}>
-                            {getStatusLabel(p.statusPembelian)}
-                          </Badge>
-                          {p.pembayaran && p.pembayaran.length > 0 && (
-                            <div className="text-xs text-muted-foreground">
-                              {p.pembayaran.length} pembayaran
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {p.tanggalKontrak && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(p.tanggalKontrak), 'dd MMM yyyy', { locale: id })}
-                            </div>
-                          )}
-                          {p.tanggalPembayaran && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <CreditCard className="h-3 w-3" />
-                              {format(new Date(p.tanggalPembayaran), 'dd MMM yyyy', { locale: id })}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewDetail(p)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Lihat Detail
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEdit(p)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(p.id, p.namaWarga)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Hapus
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Menampilkan {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalItems)} dari {totalItems} data
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="text-sm text-gray-500">
+                Showing {((pagination.currentPage - 1) * pagination.pageSize) + 1} to{' '}
+                {Math.min(pagination.currentPage * pagination.pageSize, pagination.total)} of{' '}
+                {pagination.total} entries
               </div>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
+                  onClick={() => onPageChange?.(pagination.currentPage - 1)}
+                  disabled={pagination.currentPage <= 1}
                 >
+                  <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
-                <span className="text-sm">
-                  Halaman {currentPage} dari {totalPages}
-                </span>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    let pageNumber: number
+                    if (pagination.totalPages <= 5) {
+                      pageNumber = i + 1
+                    } else if (pagination.currentPage <= 3) {
+                      pageNumber = i + 1
+                    } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                      pageNumber = pagination.totalPages - 4 + i
+                    } else {
+                      pageNumber = pagination.currentPage - 2 + i
+                    }
+
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={pageNumber === pagination.currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => onPageChange?.(pageNumber)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNumber}
+                      </Button>
+                    )
+                  })}
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => onPageChange?.(pagination.currentPage + 1)}
+                  disabled={pagination.currentPage >= pagination.totalPages}
                 >
                   Next
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -388,111 +229,102 @@ export function PembelianTable({ refreshTrigger }: PembelianTableProps) {
         </CardContent>
       </Card>
 
-      {/* Form Dialog */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPembelian ? 'Edit Pembelian Sertifikat' : 'Tambah Pembelian Sertifikat Baru'}
-            </DialogTitle>
-          </DialogHeader>
-          <PembelianForm
-            open={isFormOpen}
-            onOpenChange={setIsFormOpen}
-            pembelian={editingPembelian}
-            onSuccess={handleFormSuccess}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Edit Dialog */}
+      <PembelianForm
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        pembelian={editingPembelian}
+        onSuccess={() => {
+          setIsEditDialogOpen(false)
+          setEditingPembelian(null)
+          onRefresh()
+        }}
+      />
 
       {/* Detail Dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" />
-              Detail Pembelian Sertifikat
-            </DialogTitle>
+            <DialogTitle>Detail Pembelian: {selectedPembelian?.namaWarga}</DialogTitle>
           </DialogHeader>
           {selectedPembelian && (
             <div className="space-y-6">
-              {/* Informasi Pembelian */}
+              {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Informasi Warga</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{selectedPembelian.namaWarga}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedPembelian.alamatWarga}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedPembelian.noKtpWarga}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedPembelian.noHpWarga}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Informasi Tanah</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedPembelian.tanahGarapan?.letakTanah}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedPembelian.tanahGarapan?.namaPemegangHak}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span>Luas: {selectedPembelian.tanahGarapan?.luas} m²</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div>
+                  <h4 className="font-semibold mb-2">Informasi Warga</h4>
+                  <div className="space-y-2">
+                    <p><strong>Nama:</strong> {selectedPembelian.namaWarga}</p>
+                    <p><strong>Alamat:</strong> {selectedPembelian.alamatWarga}</p>
+                    <p><strong>No KTP:</strong> {selectedPembelian.noKtpWarga}</p>
+                    <p><strong>No HP:</strong> {selectedPembelian.noHpWarga}</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Informasi Proyek</h4>
+                  <div className="space-y-2">
+                    <p><strong>Nama Proyek:</strong> {selectedPembelian.proyek?.namaProyek}</p>
+                    <p><strong>Lokasi Proyek:</strong> {selectedPembelian.proyek?.lokasiProyek}</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Informasi Proyek */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Informasi Proyek</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-muted-foreground">Nama Proyek:</span>
-                      <div className="font-medium">{selectedPembelian.proyek?.namaProyek}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Lokasi Proyek:</span>
-                      <div className="font-medium">{selectedPembelian.proyek?.lokasiProyek}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Tanah Garapan Information */}
+              <div>
+                <h4 className="font-semibold mb-2">Informasi Tanah Garapan</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <p><strong>Letak Tanah:</strong> {selectedPembelian.tanahGarapan?.letakTanah}</p>
+                  <p><strong>Nama Pemegang Hak:</strong> {selectedPembelian.tanahGarapan?.namaPemegangHak}</p>
+                  <p><strong>Luas:</strong> {selectedPembelian.tanahGarapan?.luas} m²</p>
+                </div>
+              </div>
 
-              {/* Riwayat Pembayaran */}
-              <PembayaranTable
-                pembelianId={selectedPembelian.id}
-                namaWarga={selectedPembelian.namaWarga}
-                totalHarga={Number(selectedPembelian.hargaBeli)}
-                pembayaran={selectedPembelian.pembayaran || []}
-                onSuccess={() => {
-                  loadPembelian()
-                  handleDetailClose()
-                }}
-              />
+              {/* Purchase Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold mb-2">Informasi Pembelian</h4>
+                  <div className="space-y-2">
+                    <p><strong>Harga Beli:</strong> {formatCurrency(Number(selectedPembelian.hargaBeli))}</p>
+                    <p><strong>Status:</strong>
+                      <Badge className={`ml-2 ${statusColors[selectedPembelian.statusPembelian as keyof typeof statusColors]}`}>
+                        {statusLabels[selectedPembelian.statusPembelian as keyof typeof statusLabels]}
+                      </Badge>
+                    </p>
+                    <p><strong>Metode Pembayaran:</strong> {selectedPembelian.metodePembayaran || '-'}</p>
+                    <p><strong>Tanggal Kontrak:</strong> {formatDate(selectedPembelian.tanggalKontrak)}</p>
+                    <p><strong>Tanggal Pembayaran:</strong> {formatDate(selectedPembelian.tanggalPembayaran)}</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Informasi Sertifikat</h4>
+                  <div className="space-y-2">
+                    <p><strong>Nomor Sertifikat:</strong> {selectedPembelian.nomorSertifikat || '-'}</p>
+                    <p><strong>Status Sertifikat:</strong> {selectedPembelian.statusSertifikat || 'PENDING'}</p>
+                    <p><strong>Dibuat:</strong> {formatDate(selectedPembelian.createdAt)}</p>
+                    <p><strong>Diupdate:</strong> {formatDate(selectedPembelian.updatedAt)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {selectedPembelian.keterangan && (
+                <div>
+                  <h4 className="font-semibold mb-2">Keterangan</h4>
+                  <p className="text-gray-600">{selectedPembelian.keterangan}</p>
+                </div>
+              )}
+
+              {/* Payments */}
+              <div>
+                <h4 className="font-semibold mb-4">Riwayat Pembayaran</h4>
+                <PembayaranTable
+                  data={selectedPembelian.pembayaran || []}
+                  pembelianId={selectedPembelian.id}
+                  onRefresh={() => {
+                    // Refresh the selected pembelian data
+                    window.location.reload()
+                  }}
+                />
+              </div>
             </div>
           )}
         </DialogContent>

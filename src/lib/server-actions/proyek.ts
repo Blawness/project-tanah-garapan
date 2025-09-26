@@ -16,7 +16,7 @@ export interface ProyekFormData {
   budgetTotal: number
 }
 
-export async function getProyekPembangunan(page: number = 1, pageSize: number = 20) {
+export async function getProyekPembangunan(page: number = 1, pageSize: number = 20, search?: string, statusFilter?: string) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
@@ -25,8 +25,24 @@ export async function getProyekPembangunan(page: number = 1, pageSize: number = 
 
     const skip = (page - 1) * pageSize
 
+    // Build where clause
+    const where: any = {}
+
+    if (search) {
+      where.OR = [
+        { namaProyek: { contains: search, mode: 'insensitive' } },
+        { lokasiProyek: { contains: search, mode: 'insensitive' } },
+        { deskripsi: { contains: search, mode: 'insensitive' } }
+      ]
+    }
+
+    if (statusFilter && statusFilter !== 'ALL') {
+      where.statusProyek = statusFilter
+    }
+
     const [proyek, total] = await Promise.all([
       prisma.proyekPembangunan.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: pageSize,
@@ -38,13 +54,13 @@ export async function getProyekPembangunan(page: number = 1, pageSize: number = 
           }
         }
       }),
-      prisma.proyekPembangunan.count()
+      prisma.proyekPembangunan.count({ where })
     ])
 
     const totalPages = Math.ceil(total / pageSize)
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
         data: proyek,
         total,
@@ -245,5 +261,89 @@ export async function getProyekStats() {
   } catch (error) {
     console.error('Error fetching proyek stats:', error)
     return { success: false, error: 'Failed to fetch proyek stats' }
+  }
+}
+
+export async function exportProyekToCSV(search?: string, statusFilter?: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    // Build where clause
+    const where: any = {}
+
+    if (search) {
+      where.OR = [
+        { namaProyek: { contains: search, mode: 'insensitive' } },
+        { lokasiProyek: { contains: search, mode: 'insensitive' } },
+        { deskripsi: { contains: search, mode: 'insensitive' } }
+      ]
+    }
+
+    if (statusFilter && statusFilter !== 'ALL') {
+      where.statusProyek = statusFilter
+    }
+
+    const proyek = await prisma.proyekPembangunan.findMany({
+      where,
+      include: {
+        pembelianSertifikat: {
+          include: {
+            tanahGarapan: true,
+            pembayaran: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    // Convert to CSV format
+    const csvHeaders = [
+      'ID',
+      'Nama Proyek',
+      'Lokasi Proyek',
+      'Deskripsi',
+      'Status Proyek',
+      'Tanggal Mulai',
+      'Tanggal Selesai',
+      'Budget Total',
+      'Budget Terpakai',
+      'Jumlah Pembelian',
+      'Total Pembelian',
+      'Dibuat Oleh',
+      'Tanggal Dibuat'
+    ]
+
+    const csvData = proyek.map(item => [
+      item.id,
+      `"${item.namaProyek}"`,
+      `"${item.lokasiProyek}"`,
+      `"${item.deskripsi || ''}"`,
+      item.statusProyek,
+      item.tanggalMulai ? item.tanggalMulai.toISOString().split('T')[0] : '',
+      item.tanggalSelesai ? item.tanggalSelesai.toISOString().split('T')[0] : '',
+      item.budgetTotal,
+      item.budgetTerpakai,
+      item.pembelianSertifikat.length,
+      item.pembelianSertifikat.reduce((sum, pembelian) => sum + Number(pembelian.hargaBeli), 0),
+      item.createdBy,
+      item.createdAt.toISOString().split('T')[0]
+    ])
+
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n')
+
+    return {
+      success: true,
+      data: csvContent,
+      filename: `proyek-pembangunan-${new Date().toISOString().split('T')[0]}.csv`
+    }
+  } catch (error) {
+    console.error('Error exporting proyek to CSV:', error)
+    return { success: false, error: 'Failed to export proyek data' }
   }
 }

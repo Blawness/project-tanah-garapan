@@ -10,17 +10,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { addPembelianSertifikat, updatePembelianSertifikat, PembelianFormData, getTanahGarapanAvailable } from '@/lib/server-actions/pembelian'
-import { getProyekPembangunan } from '@/lib/server-actions/proyek'
+import { addPembelianSertifikat, updatePembelianSertifikat, PembelianFormData } from '@/lib/server-actions/pembelian'
+import { getTanahGarapanAvailable } from '@/lib/server-actions/pembelian'
 import { toast } from 'sonner'
+import { FileUpload } from '@/components/shared/file-upload'
 
 const pembelianSchema = z.object({
-  proyekId: z.string().min(1, 'Proyek is required'),
+  proyekId: z.string().min(1, 'Proyek ID is required'),
   tanahGarapanId: z.string().min(1, 'Tanah Garapan is required'),
   namaWarga: z.string().min(1, 'Nama Warga is required'),
   alamatWarga: z.string().min(1, 'Alamat Warga is required'),
-  noKtpWarga: z.string().min(1, 'No KTP Warga is required'),
-  noHpWarga: z.string().min(1, 'No HP Warga is required'),
+  noKtpWarga: z.string().min(16, 'No KTP must be 16 digits').max(16, 'No KTP must be 16 digits'),
+  noHpWarga: z.string().min(1, 'No HP is required'),
   hargaBeli: z.coerce.number().positive('Harga must be positive'),
   statusPembelian: z.enum(['NEGOTIATION', 'AGREED', 'CONTRACT_SIGNED', 'PAID', 'CERTIFICATE_ISSUED', 'COMPLETED', 'CANCELLED']),
   tanggalKontrak: z.string().optional(),
@@ -37,24 +38,25 @@ interface PembelianFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   pembelian?: any
+  proyekId?: string
   onSuccess?: () => void
 }
 
-export function PembelianForm({ 
-  open, 
-  onOpenChange, 
-  pembelian, 
-  onSuccess 
+export function PembelianForm({
+  open,
+  onOpenChange,
+  pembelian,
+  proyekId,
+  onSuccess
 }: PembelianFormProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [proyekList, setProyekList] = useState<any[]>([])
-  const [tanahGarapanList, setTanahGarapanList] = useState<any[]>([])
+  const [availableTanahGarapan, setAvailableTanahGarapan] = useState<any[]>([])
   const isEdit = !!pembelian
 
   const form = useForm<PembelianFormData>({
     resolver: zodResolver(pembelianSchema),
     defaultValues: {
-      proyekId: pembelian?.proyekId || '',
+      proyekId: pembelian?.proyekId || proyekId || '',
       tanahGarapanId: pembelian?.tanahGarapanId || '',
       namaWarga: pembelian?.namaWarga || '',
       alamatWarga: pembelian?.alamatWarga || '',
@@ -64,7 +66,7 @@ export function PembelianForm({
       statusPembelian: pembelian?.statusPembelian || 'NEGOTIATION',
       tanggalKontrak: pembelian?.tanggalKontrak ? new Date(pembelian.tanggalKontrak).toISOString().split('T')[0] : '',
       tanggalPembayaran: pembelian?.tanggalPembayaran ? new Date(pembelian.tanggalPembayaran).toISOString().split('T')[0] : '',
-      metodePembayaran: pembelian?.metodePembayaran || undefined,
+      metodePembayaran: pembelian?.metodePembayaran || 'CASH',
       buktiPembayaran: pembelian?.buktiPembayaran || '',
       keterangan: pembelian?.keterangan || '',
       nomorSertifikat: pembelian?.nomorSertifikat || '',
@@ -75,37 +77,25 @@ export function PembelianForm({
   })
 
   useEffect(() => {
-    if (open) {
-      loadProyekList()
-      loadTanahGarapanList()
+    if (open && !isEdit) {
+      loadAvailableTanahGarapan()
     }
-  }, [open])
+  }, [open, isEdit])
 
-  const loadProyekList = async () => {
-    try {
-      const result = await getProyekPembangunan(1, 1000)
-      if (result.success && result.data) {
-        setProyekList(result.data.data)
-      }
-    } catch (error) {
-      console.error('Error loading proyek list:', error)
-    }
-  }
-
-  const loadTanahGarapanList = async () => {
+  const loadAvailableTanahGarapan = async () => {
     try {
       const result = await getTanahGarapanAvailable()
-      if (result.success && result.data) {
-        setTanahGarapanList(result.data)
+      if (result.success) {
+        setAvailableTanahGarapan(result.data)
       }
     } catch (error) {
-      console.error('Error loading tanah garapan list:', error)
+      console.error('Error loading tanah garapan:', error)
     }
   }
 
   const onSubmit = async (data: PembelianFormData) => {
     setIsLoading(true)
-    
+
     try {
       const result = isEdit
         ? await updatePembelianSertifikat(pembelian.id, data)
@@ -127,151 +117,55 @@ export function PembelianForm({
     }
   }
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(amount)
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? 'Edit Pembelian Sertifikat' : 'Tambah Pembelian Sertifikat Baru'}
+            {isEdit ? 'Edit Pembelian Sertifikat' : 'Tambah Pembelian Sertifikat'}
           </DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="proyekId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Proyek</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih proyek" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {proyekList.map((proyek) => (
-                          <SelectItem key={proyek.id} value={proyek.id}>
-                            {proyek.namaProyek} - {proyek.lokasiProyek}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="tanahGarapanId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tanah Garapan</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih tanah garapan" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {tanahGarapanList.map((tanah) => (
-                          <SelectItem key={tanah.id} value={tanah.id}>
-                            {tanah.letakTanah} - {tanah.namaPemegangHak} ({tanah.luas}m²)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Informasi Dasar</h3>
 
-            <div className="border-t pt-4">
-              <h4 className="font-semibold mb-3">Data Warga</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="namaWarga"
+                  name="tanahGarapanId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nama Warga</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan nama warga" {...field} />
-                      </FormControl>
+                      <FormLabel>Tanah Garapan</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih tanah garapan" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableTanahGarapan.map((tanah) => (
+                            <SelectItem key={tanah.id} value={tanah.id}>
+                              {tanah.letakTanah} - {tanah.namaPemegangHak} ({tanah.luas} m²)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="alamatWarga"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Alamat Warga</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan alamat warga" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="noKtpWarga"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>No KTP Warga</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan no KTP warga" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="noHpWarga"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>No HP Warga</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan no HP warga" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
 
-            <div className="border-t pt-4">
-              <h4 className="font-semibold mb-3">Data Pembelian</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="hargaBeli"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Harga Beli (Rp)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="Masukkan harga beli" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
                 <FormField
                   control={form.control}
                   name="statusPembelian"
@@ -298,35 +192,95 @@ export function PembelianForm({
                     </FormItem>
                   )}
                 />
-                
+              </div>
+            </div>
+
+            {/* Owner Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Informasi Pemilik</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="tanggalKontrak"
+                  name="namaWarga"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tanggal Kontrak</FormLabel>
+                      <FormLabel>Nama Warga</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input placeholder="Masukkan nama warga" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
-                  name="tanggalPembayaran"
+                  name="noKtpWarga"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tanggal Pembayaran</FormLabel>
+                      <FormLabel>No KTP</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input placeholder="Masukkan no KTP (16 digit)" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
+                <FormField
+                  control={form.control}
+                  name="alamatWarga"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Alamat Warga</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Masukkan alamat warga" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="noHpWarga"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>No HP</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Masukkan no HP" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Purchase Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Informasi Pembelian</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="hargaBeli"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Harga Beli (Rp)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Masukkan harga beli"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="metodePembayaran"
@@ -336,7 +290,7 @@ export function PembelianForm({
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Pilih metode pembayaran" />
+                            <SelectValue placeholder="Pilih metode" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -351,12 +305,46 @@ export function PembelianForm({
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="tanggalKontrak"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tanggal Kontrak</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
+
+              <FormField
+                control={form.control}
+                name="keterangan"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Keterangan</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Masukkan keterangan tambahan"
+                        {...field}
+                        rows={3}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <div className="border-t pt-4">
-              <h4 className="font-semibold mb-3">Data Sertifikat</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Certificate Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Informasi Sertifikat</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="nomorSertifikat"
@@ -370,7 +358,7 @@ export function PembelianForm({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="statusSertifikat"
@@ -380,7 +368,7 @@ export function PembelianForm({
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Pilih status sertifikat" />
+                            <SelectValue placeholder="Pilih status" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -394,31 +382,45 @@ export function PembelianForm({
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="tanggalPembayaran"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tanggal Pembayaran</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
+
+              <FormField
+                control={form.control}
+                name="fileSertifikat"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>File Sertifikat</FormLabel>
+                    <FormControl>
+                      <FileUpload
+                        onUpload={(url) => field.onChange(url)}
+                        accept="image/*,application/pdf"
+                        maxSize={5}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <FormField
-              control={form.control}
-              name="keterangan"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Keterangan</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Masukkan keterangan tambahan" 
-                      {...field} 
-                      rows={3}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="flex justify-end space-x-2 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={isLoading}
               >

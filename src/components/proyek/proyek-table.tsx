@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { MoreHorizontal, Edit, Trash2, Eye, Plus } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash2, Eye, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ProyekForm } from './proyek-form'
 import { deleteProyekPembangunan } from '@/lib/server-actions/proyek'
@@ -18,6 +18,13 @@ interface ProyekTableProps {
   data: any[]
   onRefresh: () => void
   onCreateNew: () => void
+  pagination?: {
+    currentPage: number
+    totalPages: number
+    total: number
+    pageSize: number
+  }
+  onPageChange?: (page: number) => void
 }
 
 const statusColors = {
@@ -34,7 +41,7 @@ const statusLabels = {
   CANCELLED: 'Cancelled'
 }
 
-export function ProyekTable({ data, onRefresh, onCreateNew }: ProyekTableProps) {
+export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageChange }: ProyekTableProps) {
   const [editingProyek, setEditingProyek] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
@@ -143,6 +150,61 @@ export function ProyekTable({ data, onRefresh, onCreateNew }: ProyekTableProps) 
               ))}
             </TableBody>
           </Table>
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="text-sm text-gray-500">
+                Showing {((pagination.currentPage - 1) * pagination.pageSize) + 1} to{' '}
+                {Math.min(pagination.currentPage * pagination.pageSize, pagination.total)} of{' '}
+                {pagination.total} entries
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange?.(pagination.currentPage - 1)}
+                  disabled={pagination.currentPage <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    let pageNumber: number
+                    if (pagination.totalPages <= 5) {
+                      pageNumber = i + 1
+                    } else if (pagination.currentPage <= 3) {
+                      pageNumber = i + 1
+                    } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                      pageNumber = pagination.totalPages - 4 + i
+                    } else {
+                      pageNumber = pagination.currentPage - 2 + i
+                    }
+
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={pageNumber === pagination.currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => onPageChange?.(pageNumber)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNumber}
+                      </Button>
+                    )
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange?.(pagination.currentPage + 1)}
+                  disabled={pagination.currentPage >= pagination.totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
