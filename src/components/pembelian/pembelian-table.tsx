@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -16,7 +16,37 @@ import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 
 interface PembelianTableProps {
-  data: any[]
+  data?: Array<{
+    id: string
+    proyekId: string
+    tanahGarapanId: string
+    namaWarga: string
+    alamatWarga: string
+    noKtpWarga: string
+    noHpWarga: string
+    hargaBeli: number
+    statusPembelian: string
+    tanggalKontrak?: string | Date
+    tanggalPembayaran?: string | Date
+    metodePembayaran?: string
+    buktiPembayaran?: string
+    keterangan?: string
+    nomorSertifikat?: string
+    fileSertifikat?: string
+    statusSertifikat?: string
+    createdAt: string | Date
+    updatedAt: string | Date
+    proyek?: {
+      namaProyek: string
+      lokasiProyek: string
+    }
+    tanahGarapan?: {
+      letakTanah: string
+      namaPemegangHak: string
+      luas: number
+    }
+    pembayaran?: Array<any>
+  }>
   onRefresh: () => void
   onCreateNew: (proyekId?: string) => void
   pagination?: {
@@ -27,6 +57,7 @@ interface PembelianTableProps {
   }
   onPageChange?: (page: number) => void
   proyekId?: string
+  refreshTrigger?: number
 }
 
 const statusColors = {
@@ -55,14 +86,36 @@ export function PembelianTable({
   onCreateNew,
   pagination,
   onPageChange,
-  proyekId
+  proyekId,
+  refreshTrigger
 }: PembelianTableProps) {
-  const [editingPembelian, setEditingPembelian] = useState<any>(null)
+  const [editingPembelian, setEditingPembelian] = useState<PembelianTableProps['data'] extends Array<infer T> ? T | null : null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
-  const [selectedPembelian, setSelectedPembelian] = useState<any>(null)
+  const [selectedPembelian, setSelectedPembelian] = useState<PembelianTableProps['data'] extends Array<infer T> ? T | null : null>(null)
+  const [pembelianData, setPembelianData] = useState<PembelianTableProps['data']>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleEdit = (pembelian: any) => {
+  useEffect(() => {
+    loadPembelianData()
+  }, [refreshTrigger])
+
+  const loadPembelianData = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/pembelian')
+      const result = await response.json()
+      if (result.success) {
+        setPembelianData(result.data)
+      }
+    } catch (error) {
+      console.error('Error loading pembelian data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleEdit = (pembelian: NonNullable<PembelianTableProps['data']>[0]) => {
     setEditingPembelian(pembelian)
     setIsEditDialogOpen(true)
   }
@@ -72,14 +125,14 @@ export function PembelianTable({
       const result = await deletePembelianSertifikat(id)
       if (result.success) {
         toast.success('Pembelian berhasil dihapus')
-        onRefresh()
+        loadPembelianData()
       } else {
         toast.error(result.error || 'Gagal menghapus pembelian')
       }
     }
   }
 
-  const handleViewDetail = (pembelian: any) => {
+  const handleViewDetail = (pembelian: NonNullable<PembelianTableProps['data']>[0]) => {
     setSelectedPembelian(pembelian)
     setIsDetailDialogOpen(true)
   }
@@ -122,7 +175,13 @@ export function PembelianTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((pembelian) => (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    Memuat data...
+                  </TableCell>
+                </TableRow>
+              ) : pembelianData && pembelianData.length > 0 ? pembelianData.map((pembelian) => (
                 <TableRow key={pembelian.id}>
                   <TableCell className="font-medium">{pembelian.namaWarga}</TableCell>
                   <TableCell>
@@ -167,7 +226,13 @@ export function PembelianTable({
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    Belum ada data pembelian sertifikat
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
 
@@ -237,7 +302,7 @@ export function PembelianTable({
         onSuccess={() => {
           setIsEditDialogOpen(false)
           setEditingPembelian(null)
-          onRefresh()
+          loadPembelianData()
         }}
       />
 
@@ -314,17 +379,19 @@ export function PembelianTable({
               )}
 
               {/* Payments */}
-              <div>
-                <h4 className="font-semibold mb-4">Riwayat Pembayaran</h4>
-                <PembayaranTable
-                  data={selectedPembelian.pembayaran || []}
-                  pembelianId={selectedPembelian.id}
-                  onRefresh={() => {
-                    // Refresh the selected pembelian data
-                    window.location.reload()
-                  }}
-                />
-              </div>
+              {selectedPembelian.pembayaran && selectedPembelian.pembayaran.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-4">Riwayat Pembayaran</h4>
+                  <PembayaranTable
+                    data={selectedPembelian.pembayaran || []}
+                    pembelianId={selectedPembelian.id}
+                    onRefresh={() => {
+                      // Refresh the selected pembelian data
+                      window.location.reload()
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

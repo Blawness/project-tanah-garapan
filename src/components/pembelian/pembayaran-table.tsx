@@ -1,19 +1,27 @@
 'use client'
 
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Plus } from 'lucide-react'
 import { PembayaranForm } from './pembayaran-form'
-import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 
 interface PembayaranTableProps {
-  data: any[]
+  data: Array<{
+    id: string
+    pembelianId: string
+    nomorPembayaran: string
+    jumlahPembayaran: number
+    jenisPembayaran: string
+    metodePembayaran: string
+    tanggalPembayaran: string | Date
+    statusPembayaran: string
+    buktiPembayaran?: string
+    keterangan?: string
+  }>
   pembelianId: string
   onRefresh: () => void
 }
@@ -76,7 +84,7 @@ export function PembayaranTable({ data, pembelianId, onRefresh }: PembayaranTabl
           </Button>
         </CardHeader>
         <CardContent>
-          {data.length === 0 ? (
+          {data && data.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               Belum ada pembayaran untuk pembelian ini
             </div>
@@ -93,7 +101,7 @@ export function PembayaranTable({ data, pembelianId, onRefresh }: PembayaranTabl
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.map((pembayaran) => (
+                {data && data.length > 0 ? data.map((pembayaran) => (
                   <TableRow key={pembayaran.id}>
                     <TableCell className="font-medium">{pembayaran.nomorPembayaran}</TableCell>
                     <TableCell>{formatCurrency(Number(pembayaran.jumlahPembayaran))}</TableCell>
@@ -106,7 +114,13 @@ export function PembayaranTable({ data, pembelianId, onRefresh }: PembayaranTabl
                     </TableCell>
                     <TableCell>{formatDate(pembayaran.tanggalPembayaran)}</TableCell>
                   </TableRow>
-                ))}
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      Belum ada data pembayaran
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}

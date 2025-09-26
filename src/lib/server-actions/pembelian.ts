@@ -63,12 +63,27 @@ export async function getPembelianSertifikat(page: number = 1, pageSize: number 
       prisma.pembelianSertifikat.count({ where: whereClause })
     ])
 
+    // Convert Decimal objects to numbers for Client Component compatibility
+    const serializedPembelian = pembelian.map(item => ({
+      ...item,
+      hargaBeli: Number(item.hargaBeli),
+      pembayaran: item.pembayaran.map(pembayaran => ({
+        ...pembayaran,
+        jumlahPembayaran: Number(pembayaran.jumlahPembayaran)
+      })),
+      proyek: item.proyek ? {
+        ...item.proyek,
+        budgetTotal: Number(item.proyek.budgetTotal),
+        budgetTerpakai: Number(item.proyek.budgetTerpakai)
+      } : null
+    }))
+
     const totalPages = Math.ceil(total / pageSize)
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
-        data: pembelian,
+        data: serializedPembelian,
         total,
         totalPages,
         currentPage: page,
@@ -103,7 +118,22 @@ export async function getPembelianSertifikatById(id: string) {
       return { success: false, error: 'Pembelian not found' }
     }
 
-    return { success: true, data: pembelian }
+    // Convert Decimal objects to numbers for Client Component compatibility
+    const serializedPembelian = {
+      ...pembelian,
+      hargaBeli: Number(pembelian.hargaBeli),
+      pembayaran: pembelian.pembayaran.map(pembayaran => ({
+        ...pembayaran,
+        jumlahPembayaran: Number(pembayaran.jumlahPembayaran)
+      })),
+      proyek: pembelian.proyek ? {
+        ...pembelian.proyek,
+        budgetTotal: Number(pembelian.proyek.budgetTotal),
+        budgetTerpakai: Number(pembelian.proyek.budgetTerpakai)
+      } : null
+    }
+
+    return { success: true, data: serializedPembelian }
   } catch (error) {
     console.error('Error fetching pembelian by id:', error)
     return { success: false, error: 'Failed to fetch pembelian' }
@@ -139,16 +169,22 @@ export async function addPembelianSertifikat(data: PembelianFormData) {
       }
     })
 
+    // Convert Decimal objects to numbers for Client Component compatibility
+    const serializedPembelian = {
+      ...pembelian,
+      hargaBeli: Number(pembelian.hargaBeli)
+    }
+
     await logActivity(
       session.user.name,
       'CREATE_PEMBELIAN',
       `Created new pembelian: ${pembelian.namaWarga} - ${pembelian.hargaBeli}`,
-      pembelian
+      serializedPembelian
     )
 
     revalidatePath('/pembelian')
     revalidatePath(`/proyek/${data.proyekId}`)
-    return { success: true, data: pembelian, message: 'Pembelian created successfully' }
+    return { success: true, data: serializedPembelian, message: 'Pembelian created successfully' }
   } catch (error) {
     console.error('Error creating pembelian:', error)
     if (error instanceof Error) {
@@ -187,16 +223,22 @@ export async function updatePembelianSertifikat(id: string, data: PembelianFormD
       }
     })
 
+    // Convert Decimal objects to numbers for Client Component compatibility
+    const serializedPembelian = {
+      ...pembelian,
+      hargaBeli: Number(pembelian.hargaBeli)
+    }
+
     await logActivity(
       session.user.name,
       'UPDATE_PEMBELIAN',
       `Updated pembelian: ${pembelian.namaWarga} - ${pembelian.hargaBeli}`,
-      pembelian
+      serializedPembelian
     )
 
     revalidatePath('/pembelian')
     revalidatePath(`/proyek/${data.proyekId}`)
-    return { success: true, data: pembelian, message: 'Pembelian updated successfully' }
+    return { success: true, data: serializedPembelian, message: 'Pembelian updated successfully' }
   } catch (error) {
     console.error('Error updating pembelian:', error)
     if (error instanceof Error) {
@@ -273,16 +315,22 @@ export async function addPembayaranPembelian(data: PembayaranFormData) {
       }
     })
 
+    // Convert Decimal objects to numbers for Client Component compatibility
+    const serializedPembayaran = {
+      ...pembayaran,
+      jumlahPembayaran: Number(pembayaran.jumlahPembayaran)
+    }
+
     await logActivity(
       session.user.name,
       'CREATE_PEMBAYARAN',
       `Created new pembayaran: ${pembayaran.nomorPembayaran} - ${pembayaran.jumlahPembayaran}`,
-      pembayaran
+      serializedPembayaran
     )
 
     revalidatePath('/pembelian')
     revalidatePath(`/pembelian/${data.pembelianId}`)
-    return { success: true, data: pembayaran, message: 'Pembayaran created successfully' }
+    return { success: true, data: serializedPembayaran, message: 'Pembayaran created successfully' }
   } catch (error) {
     console.error('Error creating pembayaran:', error)
     if (error instanceof Error) {
@@ -318,7 +366,7 @@ export async function getPembelianStats() {
       success: true,
       data: {
         totalPembelian,
-        totalHarga: totalHarga._sum.hargaBeli || 0,
+        totalHarga: Number(totalHarga._sum.hargaBeli) || 0,
         pembelianByStatus: pembelianByStatus.reduce((acc, item) => {
           acc[item.statusPembelian] = item._count.id
           return acc

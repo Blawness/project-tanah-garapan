@@ -15,7 +15,20 @@ import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 
 interface ProyekTableProps {
-  data: any[]
+  data: Array<{
+    id: string
+    namaProyek: string
+    lokasiProyek: string
+    deskripsi?: string
+    statusProyek: string
+    tanggalMulai?: string | Date
+    tanggalSelesai?: string | Date
+    budgetTotal: number
+    budgetTerpakai: number
+    createdAt: string | Date
+    updatedAt: string | Date
+    pembelianSertifikat?: Array<any>
+  }>
   onRefresh: () => void
   onCreateNew: () => void
   pagination?: {
@@ -42,12 +55,12 @@ const statusLabels = {
 }
 
 export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageChange }: ProyekTableProps) {
-  const [editingProyek, setEditingProyek] = useState<any>(null)
+  const [editingProyek, setEditingProyek] = useState<ProyekTableProps['data'][0] | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
-  const [selectedProyek, setSelectedProyek] = useState<any>(null)
+  const [selectedProyek, setSelectedProyek] = useState<ProyekTableProps['data'][0] | null>(null)
 
-  const handleEdit = (proyek: any) => {
+  const handleEdit = (proyek: ProyekTableProps['data'][0]) => {
     setEditingProyek(proyek)
     setIsEditDialogOpen(true)
   }
@@ -64,7 +77,7 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
     }
   }
 
-  const handleViewDetail = (proyek: any) => {
+  const handleViewDetail = (proyek: ProyekTableProps['data'][0]) => {
     setSelectedProyek(proyek)
     setIsDetailDialogOpen(true)
   }

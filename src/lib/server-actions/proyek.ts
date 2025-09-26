@@ -26,7 +26,7 @@ export async function getProyekPembangunan(page: number = 1, pageSize: number = 
     const skip = (page - 1) * pageSize
 
     // Build where clause
-    const where: any = {}
+    const where: Record<string, any> = {}
 
     if (search) {
       where.OR = [
@@ -57,12 +57,19 @@ export async function getProyekPembangunan(page: number = 1, pageSize: number = 
       prisma.proyekPembangunan.count({ where })
     ])
 
+    // Convert Decimal objects to numbers for Client Component compatibility
+    const serializedProyek = proyek.map(item => ({
+      ...item,
+      budgetTotal: Number(item.budgetTotal),
+      budgetTerpakai: Number(item.budgetTerpakai)
+    }))
+
     const totalPages = Math.ceil(total / pageSize)
 
     return {
       success: true,
       data: {
-        data: proyek,
+        data: serializedProyek,
         total,
         totalPages,
         currentPage: page,
@@ -98,7 +105,14 @@ export async function getProyekPembangunanById(id: string) {
       return { success: false, error: 'Proyek not found' }
     }
 
-    return { success: true, data: proyek }
+    // Convert Decimal objects to numbers for Client Component compatibility
+    const serializedProyek = {
+      ...proyek,
+      budgetTotal: Number(proyek.budgetTotal),
+      budgetTerpakai: Number(proyek.budgetTerpakai)
+    }
+
+    return { success: true, data: serializedProyek }
   } catch (error) {
     console.error('Error fetching proyek by id:', error)
     return { success: false, error: 'Failed to fetch proyek' }
@@ -125,15 +139,22 @@ export async function addProyekPembangunan(data: ProyekFormData) {
       }
     })
 
+    // Convert Decimal objects to numbers for Client Component compatibility
+    const serializedProyek = {
+      ...proyek,
+      budgetTotal: Number(proyek.budgetTotal),
+      budgetTerpakai: Number(proyek.budgetTerpakai)
+    }
+
     await logActivity(
       session.user.name,
       'CREATE_PROYEK',
       `Created new proyek: ${proyek.namaProyek}`,
-      proyek
+      serializedProyek
     )
 
     revalidatePath('/proyek')
-    return { success: true, data: proyek, message: 'Proyek created successfully' }
+    return { success: true, data: serializedProyek, message: 'Proyek created successfully' }
   } catch (error) {
     console.error('Error creating proyek:', error)
     if (error instanceof Error) {
@@ -163,15 +184,22 @@ export async function updateProyekPembangunan(id: string, data: ProyekFormData) 
       }
     })
 
+    // Convert Decimal objects to numbers for Client Component compatibility
+    const serializedProyek = {
+      ...proyek,
+      budgetTotal: Number(proyek.budgetTotal),
+      budgetTerpakai: Number(proyek.budgetTerpakai)
+    }
+
     await logActivity(
       session.user.name,
       'UPDATE_PROYEK',
       `Updated proyek: ${proyek.namaProyek}`,
-      proyek
+      serializedProyek
     )
 
     revalidatePath('/proyek')
-    return { success: true, data: proyek, message: 'Proyek updated successfully' }
+    return { success: true, data: serializedProyek, message: 'Proyek updated successfully' }
   } catch (error) {
     console.error('Error updating proyek:', error)
     if (error instanceof Error) {
@@ -250,8 +278,8 @@ export async function getProyekStats() {
       success: true,
       data: {
         totalProyek,
-        totalBudget: totalBudget._sum.budgetTotal || 0,
-        totalTerpakai: totalTerpakai._sum.budgetTerpakai || 0,
+        totalBudget: Number(totalBudget._sum.budgetTotal) || 0,
+        totalTerpakai: Number(totalTerpakai._sum.budgetTerpakai) || 0,
         proyekByStatus: proyekByStatus.reduce((acc, item) => {
           acc[item.statusProyek] = item._count.id
           return acc
@@ -272,7 +300,7 @@ export async function exportProyekToCSV(search?: string, statusFilter?: string) 
     }
 
     // Build where clause
-    const where: any = {}
+    const where: Record<string, any> = {}
 
     if (search) {
       where.OR = [
@@ -316,7 +344,14 @@ export async function exportProyekToCSV(search?: string, statusFilter?: string) 
       'Tanggal Dibuat'
     ]
 
-    const csvData = proyek.map(item => [
+    // Convert Decimal objects to numbers for CSV
+    const serializedProyek = proyek.map(item => ({
+      ...item,
+      budgetTotal: Number(item.budgetTotal),
+      budgetTerpakai: Number(item.budgetTerpakai)
+    }))
+
+    const csvData = serializedProyek.map(item => [
       item.id,
       `"${item.namaProyek}"`,
       `"${item.lokasiProyek}"`,

@@ -26,7 +26,16 @@ const proyekSchema = z.object({
 interface ProyekFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  proyek?: any
+  proyek?: {
+    id: string
+    namaProyek: string
+    lokasiProyek: string
+    deskripsi?: string
+    statusProyek: string
+    tanggalMulai?: string | Date
+    tanggalSelesai?: string | Date
+    budgetTotal: number
+  }
   onSuccess?: () => void
 }
 

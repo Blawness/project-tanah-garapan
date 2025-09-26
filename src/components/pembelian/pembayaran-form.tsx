@@ -56,7 +56,17 @@ export function PembayaranForm({
     mode: 'onChange'
   })
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: {
+    pembelianId: string
+    nomorPembayaran: string
+    jumlahPembayaran: number
+    jenisPembayaran: 'DP' | 'CICILAN' | 'PELUNASAN' | 'BONUS'
+    metodePembayaran: 'CASH' | 'TRANSFER' | 'QRIS' | 'E_WALLET' | 'BANK_TRANSFER'
+    tanggalPembayaran: string
+    statusPembayaran: 'PENDING' | 'VERIFIED' | 'REJECTED'
+    buktiPembayaran?: string
+    keterangan?: string
+  }) => {
     setIsLoading(true)
 
     try {

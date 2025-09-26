@@ -37,7 +37,25 @@ const pembelianSchema = z.object({
 interface PembelianFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  pembelian?: any
+  pembelian?: {
+    id: string
+    proyekId: string
+    tanahGarapanId: string
+    namaWarga: string
+    alamatWarga: string
+    noKtpWarga: string
+    noHpWarga: string
+    hargaBeli: number
+    statusPembelian: string
+    tanggalKontrak?: string | Date
+    tanggalPembayaran?: string | Date
+    metodePembayaran?: string
+    buktiPembayaran?: string
+    keterangan?: string
+    nomorSertifikat?: string
+    fileSertifikat?: string
+    statusSertifikat?: string
+  }
   proyekId?: string
   onSuccess?: () => void
 }
@@ -50,7 +68,12 @@ export function PembelianForm({
   onSuccess
 }: PembelianFormProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [availableTanahGarapan, setAvailableTanahGarapan] = useState<any[]>([])
+  const [availableTanahGarapan, setAvailableTanahGarapan] = useState<Array<{
+    id: string
+    letakTanah: string
+    namaPemegangHak: string
+    luas: number
+  }>>([])
   const isEdit = !!pembelian
 
   const form = useForm<PembelianFormData>({
@@ -117,13 +140,6 @@ export function PembelianForm({
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount)
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

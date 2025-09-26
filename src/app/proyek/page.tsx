@@ -20,9 +20,14 @@ import { useSession } from 'next-auth/react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function ProyekPage() {
-  const { data: session } = useSession()
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [proyekData, setProyekData] = useState<any>(null)
+  const [proyekData, setProyekData] = useState<{
+    data: any[]
+    total: number
+    totalPages: number
+    currentPage: number
+    pageSize: number
+  } | null>(null)
   const [stats, setStats] = useState({
     totalProyek: 0,
     totalBudget: 0,
@@ -42,7 +47,13 @@ export default function ProyekPage() {
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [isSearching, setIsSearching] = useState(false)
   const [isPembelianFormOpen, setIsPembelianFormOpen] = useState(false)
-  const [pembelianData, setPembelianData] = useState<any>(null)
+  const [pembelianData, setPembelianData] = useState<{
+    data: any[]
+    total: number
+    totalPages: number
+    currentPage: number
+    pageSize: number
+  } | null>(null)
   const [activeTab, setActiveTab] = useState('proyek')
 
   const formatCurrency = (amount: number) => {
@@ -111,6 +122,10 @@ export default function ProyekPage() {
     loadStats()
   }, [currentPage])
 
+  useEffect(() => {
+    loadPembelianData()
+  }, [])
+
   const handleSearch = () => {
     setCurrentPage(1) // Reset to first page when searching
     loadProyekData(1)
@@ -142,13 +157,13 @@ export default function ProyekPage() {
     setIsFormOpen(true)
   }
 
-  const handleCreateNewPembelian = (proyekId?: string) => {
+  const handleCreateNewPembelian = () => {
     setIsPembelianFormOpen(true)
   }
 
-  const loadPembelianData = async (proyekId?: string) => {
+  const loadPembelianData = async () => {
     try {
-      const result = await getPembelianSertifikat(1, 20, proyekId)
+      const result = await getPembelianSertifikat(1, 20)
       if (result.success) {
         setPembelianData(result.data)
       } else {
