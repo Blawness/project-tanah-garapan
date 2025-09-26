@@ -8,10 +8,8 @@ import { AppLayout } from '@/components/layout/app-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { TanahGarapanForm } from '@/components/tanah-garapan/tanah-garapan-form'
-import { TanahGarapanTable } from '@/components/tanah-garapan/tanah-garapan-table'
-import { ExportButton } from '@/components/tanah-garapan/export-button'
-import { AdvancedSearch } from '@/components/tanah-garapan/advanced-search'
+import { LazyTanahGarapanForm, LazyTanahGarapanTable, LazyExportButton, LazyAdvancedSearch } from '@/components/lazy/lazy-components'
+import { LazyWrapper, TableFallback, FormFallback } from '@/components/lazy/lazy-wrapper'
 import { DataPagination } from '@/components/shared/data-pagination'
 import { Plus, Search, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
@@ -150,9 +148,11 @@ export default function TanahGarapanPage() {
           </div>
           
           <div className="flex items-center space-x-2">
-            <ExportButton 
-              selectedIds={selectedIds}
-            />
+            <LazyWrapper fallback={<div className="h-10 w-32 bg-gray-200 rounded animate-pulse" />}>
+              <LazyExportButton 
+                selectedIds={selectedIds}
+              />
+            </LazyWrapper>
             {canManage && (
               <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -202,11 +202,13 @@ export default function TanahGarapanPage() {
         </div>
 
         {/* Advanced Search */}
-        <AdvancedSearch
-          onSearch={handleAdvancedSearch}
-          onClear={handleClearAdvancedSearch}
-          locations={locations}
-        />
+        <LazyWrapper fallback={<div className="h-32 bg-gray-100 rounded animate-pulse" />}>
+          <LazyAdvancedSearch
+            onSearch={handleAdvancedSearch}
+            onClear={handleClearAdvancedSearch}
+            locations={locations}
+          />
+        </LazyWrapper>
 
         {/* Basic Search and Actions */}
         <Card>
@@ -257,12 +259,14 @@ export default function TanahGarapanPage() {
                 </div>
               </div>
             ) : (
-              <TanahGarapanTable
-                entries={entries}
-                onRefresh={handleRefresh}
-                selectedIds={selectedIds}
-                onSelectionChange={setSelectedIds}
-              />
+              <LazyWrapper fallback={<TableFallback />}>
+                <LazyTanahGarapanTable
+                  entries={entries}
+                  onRefresh={handleRefresh}
+                  selectedIds={selectedIds}
+                  onSelectionChange={setSelectedIds}
+                />
+              </LazyWrapper>
             )}
           </CardContent>
         </Card>
@@ -279,11 +283,13 @@ export default function TanahGarapanPage() {
       </div>
 
       {/* Add Form Dialog */}
-      <TanahGarapanForm
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSuccess={handleRefresh}
-      />
+      <LazyWrapper fallback={<FormFallback />}>
+        <LazyTanahGarapanForm
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          onSuccess={handleRefresh}
+        />
+      </LazyWrapper>
     </AppLayout>
   )
 }

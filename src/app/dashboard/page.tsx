@@ -1,39 +1,28 @@
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { getTanahGarapanEntries } from '@/lib/server-actions/tanah-garapan'
-import { getActivityLogs } from '@/lib/server-actions/activity'
-import { getUsers } from '@/lib/server-actions/users'
+import { getCachedTanahGarapanStats, getCachedUserRoles, getCachedRecentActivity } from '@/lib/cache'
 import { MapPin, Users, Activity, FileText } from 'lucide-react'
 
 export default async function DashboardPage() {
-  const [entriesResult, logsResult, usersResult] = await Promise.all([
-    getTanahGarapanEntries(),
-    getActivityLogs(),
-    getUsers()
+  const [tanahGarapanStats, userRoles, recentActivity] = await Promise.all([
+    getCachedTanahGarapanStats(),
+    getCachedUserRoles(),
+    getCachedRecentActivity(5)
   ])
 
-  // Safely extract data with proper error handling
-  const totalEntries = entriesResult.success ? entriesResult.data?.total || 0 : 0
-  const totalLogs = logsResult.success ? logsResult.data?.length || 0 : 0
-  const totalUsers = usersResult.success ? usersResult.data?.length || 0 : 0
-
-  // Calculate total land area - safely handle the data structure
-  let totalArea = 0
-  if (entriesResult.success && entriesResult.data?.data && Array.isArray(entriesResult.data.data)) {
-    totalArea = entriesResult.data.data.reduce((sum: number, entry: { luas?: number }) => sum + (entry.luas || 0), 0)
-  }
+  const totalUsers = Object.values(userRoles).reduce((sum, count) => sum + count, 0)
 
   const stats = [
     {
       title: 'Total Tanah Garapan',
-      value: totalEntries,
+      value: tanahGarapanStats.totalEntries,
       description: 'Jumlah data tanah garapan',
       icon: MapPin,
       color: 'text-blue-600'
     },
     {
       title: 'Total Luas',
-      value: `${totalArea.toLocaleString()} m²`,
+      value: `${tanahGarapanStats.totalLuas.toLocaleString()} m²`,
       description: 'Total luas tanah garapan',
       icon: FileText,
       color: 'text-green-600'
@@ -46,9 +35,9 @@ export default async function DashboardPage() {
       color: 'text-purple-600'
     },
     {
-      title: 'Aktivitas Log',
-      value: totalLogs,
-      description: 'Jumlah log aktivitas',
+      title: 'Aktivitas Terbaru',
+      value: recentActivity.length,
+      description: 'Aktivitas terbaru',
       icon: Activity,
       color: 'text-orange-600'
     }
@@ -84,7 +73,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        {logsResult.success && logsResult.data && logsResult.data.length > 0 && (
+        {recentActivity.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
@@ -94,7 +83,7 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {logsResult.data.slice(0, 5).map((log: { id: string; details: string; user: string; createdAt: string }) => (
+                {recentActivity.map((log) => (
                   <div key={log.id} className="flex items-center space-x-4">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1 min-w-0">

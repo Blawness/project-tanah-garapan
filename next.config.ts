@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['bcryptjs'],
-  },
+  serverExternalPackages: ['bcryptjs'],
   async rewrites() {
     return [
       {
@@ -11,6 +9,17 @@ const nextConfig: NextConfig = {
         destination: '/api/files/:path*',
       },
     ];
+  },
+  // Performance optimizations
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  // Enable compression
+  compress: true,
+  // Optimize images
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60,
   },
 };
 

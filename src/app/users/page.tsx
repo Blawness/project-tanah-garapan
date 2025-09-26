@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/button'
 import { getUsers } from '@/lib/server-actions/users'
 import { canViewLogs } from '@/lib/auth'
 import { Users, UserPlus, Shield, Calendar } from 'lucide-react'
-import { UserForm } from '@/components/users/user-form'
-import { UserActions } from '@/components/users/user-actions'
+import { LazyUserForm, LazyUserActions } from '@/components/lazy/lazy-components'
+import { LazyWrapper, FormFallback, CardFallback } from '@/components/lazy/lazy-wrapper'
 import { toast } from 'sonner'
 
 export default function UsersPage() {
@@ -232,11 +232,13 @@ export default function UsersPage() {
                         </p>
                       </div>
                     </div>
-                    <UserActions 
-                      user={user} 
-                      onEdit={handleEditUser}
-                      onRefresh={fetchUsers}
-                    />
+                    <LazyWrapper fallback={<div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />}>
+                      <LazyUserActions 
+                        user={user} 
+                        onEdit={handleEditUser}
+                        onRefresh={fetchUsers}
+                      />
+                    </LazyWrapper>
                   </div>
                 ))}
               </div>
@@ -291,13 +293,15 @@ export default function UsersPage() {
       </div>
 
       {/* User Form Dialog */}
-      <UserForm
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        onSuccess={handleFormSuccess}
-        user={editingUser}
-        mode={formMode}
-      />
+      <LazyWrapper fallback={<FormFallback />}>
+        <LazyUserForm
+          open={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          onSuccess={handleFormSuccess}
+          user={editingUser}
+          mode={formMode}
+        />
+      </LazyWrapper>
     </AppLayout>
   )
 }
