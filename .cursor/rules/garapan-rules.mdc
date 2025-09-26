@@ -4,9 +4,109 @@ globs:
 alwaysApply: true
 ---
 
-// Rule: AI agent harus menghindari halusinasi (jangan mengarang jawaban atau kode yang tidak didukung oleh context/permintaan user).
-// - Selalu baca dan prioritaskan informasi dari folder 'docs', serta instruksi dan context yang diberikan (docs, file, prompt).
-// - Analisa kebutuhan user dengan membaca dan memahami context sebelum mulai generate kode/jawaban.
-// - Jika ada ketidakjelasan atau kekurangan context, jangan mengisi dengan asumsi liar; lebih baik diam atau minta klarifikasi (jika diperbolehkan).
-// - Optimalkan penggunaan token: hindari penjelasan/kode yang berulang, verbose, atau tidak perlu.
+// Rule: The AI agent must avoid hallucination (do not invent answers or code that are not supported by the provided context or user request).
+// - Always read and prioritize information from the 'docs' folder, as well as any instructions and context given (including docs, files, and prompts).
+// - Analyze the user's needs by carefully reading and understanding the context before generating any code or answers.
+// - If there is ambiguity or missing context, do not make wild assumptions; it is better to remain silent or ask for clarification (if allowed).
+// - Optimize token usage: avoid unnecessary repetition, verbosity, or redundant explanations/code.
+
+// CODE QUALITY AND STANDARDS
+// - Follow language-specific best practices and conventions (PEP 8 for Python, ESLint for JavaScript/TypeScript, etc.)
+// - Write clean, readable, and maintainable code with meaningful variable and function names
+// - Use consistent indentation and formatting throughout the codebase
+// - Implement proper error handling and input validation
+// - Follow DRY (Don't Repeat Yourself) principles - extract common functionality into reusable functions/modules
+// - Use appropriate data structures and algorithms for optimal performance
+// - Write self-documenting code with clear intent and minimal cognitive complexity
+
+// DOCUMENTATION AND COMMENTS
+// - Add docstrings/JSDoc comments for all public functions, classes, and modules
+// - Include inline comments for complex logic or non-obvious code sections
+// - Maintain up-to-date README files with setup, usage, and contribution guidelines
+// - Document API endpoints, parameters, and return values clearly
+// - Use type hints/annotations where applicable (TypeScript, Python type hints, etc.)
+// - Keep comments concise but informative - explain "why" not just "what"
+
+// SECURITY AND PERFORMANCE
+// - Never hardcode sensitive information (API keys, passwords, tokens) in source code
+// - Use environment variables or secure configuration management for secrets
+// - Implement proper authentication and authorization mechanisms
+// - Validate and sanitize all user inputs to prevent injection attacks
+// - Optimize database queries and avoid N+1 query problems
+// - Implement proper caching strategies where appropriate
+// - Use lazy loading and pagination for large datasets
+
+// TESTING AND RELIABILITY
+// - Write unit tests for critical business logic and edge cases
+// - Implement integration tests for API endpoints and external dependencies
+// - Maintain test coverage above 80% for core functionality
+// - Use descriptive test names that explain the scenario being tested
+// - Mock external dependencies in tests to ensure isolation
+// - Include both positive and negative test cases
+// - Set up automated testing in CI/CD pipelines
+
+// GIT AND VERSION CONTROL
+// - Write clear, descriptive commit messages following conventional commit format
+// - Use feature branches for new development and bug fixes
+// - Keep commits atomic and focused on a single logical change
+// - Include issue numbers in commit messages when applicable
+// - Perform code reviews before merging to main/master branch
+// - Use semantic versioning for releases
+// - Maintain a clean git history with meaningful commit progression
+
+// FILE ORGANIZATION AND STRUCTURE
+// - Organize code into logical modules and directories
+// - Use consistent naming conventions for files and folders
+// - Separate concerns: models, views, controllers, utilities, etc.
+// - Keep configuration files at the project root or in a dedicated config directory
+// - Use absolute imports over relative imports when possible
+// - Maintain a clear separation between source code and build artifacts
+
+// DEPENDENCY MANAGEMENT
+// - Pin dependency versions to ensure reproducible builds
+// - Regularly update dependencies to patch security vulnerabilities
+// - Remove unused dependencies to keep the project lean
+// - Use lock files (package-lock.json, poetry.lock, etc.) for consistent environments
+// - Document any special dependency requirements or constraints
+// - Prefer well-maintained, popular libraries over custom implementations
+
+// API DESIGN AND DEVELOPMENT
+// - Follow RESTful principles for HTTP APIs
+// - Use consistent URL patterns and HTTP methods
+// - Implement proper status codes and error responses
+// - Version APIs to maintain backward compatibility
+// - Include request/response examples in API documentation
+// - Implement rate limiting and request validation
+// - Use pagination for endpoints that return large datasets
+
+// LOGGING AND MONITORING
+// - Implement structured logging with appropriate log levels
+// - Include contextual information in log messages (user ID, request ID, etc.)
+// - Set up error tracking and monitoring for production environments
+// - Log important business events and system metrics
+// - Avoid logging sensitive information (passwords, tokens, PII)
+// - Use centralized logging for distributed systems
+
+// ENVIRONMENT AND DEPLOYMENT
+// - Use environment-specific configuration files
+// - Implement proper environment variable management
+// - Set up automated deployment pipelines
+// - Use containerization (Docker) for consistent environments
+// - Implement health checks and readiness probes
+// - Follow the twelve-factor app methodology
+// - Plan for rollback strategies in case of deployment issues
+
+// COLLABORATION AND COMMUNICATION
+// - Use clear and descriptive variable, function, and class names
+// - Follow team coding standards and style guides
+// - Participate in code reviews with constructive feedback
+// - Document architectural decisions and trade-offs
+// - Communicate breaking changes and migration paths clearly
+// - Use issue tracking systems for bug reports and feature requests
+// - Maintain clear project roadmaps and milestone planning
+
+
+// - Analyze the user's needs by carefully reading and understanding the context before generating any code or answers.
+// - If there is ambiguity or missing context, do not make wild assumptions; it is better to remain silent or ask for clarification (if allowed).
+// - Optimize token usage: avoid unnecessary repetition, verbosity, or redundant explanations/code.
 
