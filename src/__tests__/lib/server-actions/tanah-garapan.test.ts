@@ -222,9 +222,19 @@ describe('Tanah Garapan Server Actions', () => {
     })
 
     it('returns not found when entry does not exist', async () => {
+      const validData = {
+        letakTanah: 'Desa Test',
+        namaPemegangHak: 'John Doe',
+        letterC: 'C-001',
+        nomorSuratKeteranganGarapan: 'SKG-001',
+        luas: 1000,
+        file_url: null,
+        keterangan: null,
+      }
+
       mockPrisma.tanahGarapanEntry.findUnique.mockResolvedValue(null)
 
-      const result = await updateTanahGarapanEntry('1', {} as any)
+      const result = await updateTanahGarapanEntry('1', validData)
 
       expect(result.success).toBe(false)
       expect(result.error).toBe('Entry not found')

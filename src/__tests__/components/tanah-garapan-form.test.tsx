@@ -2,12 +2,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TanahGarapanForm } from '@/components/tanah-garapan/tanah-garapan-form'
 import { addTanahGarapanEntry, updateTanahGarapanEntry } from '@/lib/server-actions/tanah-garapan'
+import { toast } from 'sonner'
 
 // Mock the server actions
 jest.mock('@/lib/server-actions/tanah-garapan')
+jest.mock('sonner')
 
 const mockAddTanahGarapanEntry = addTanahGarapanEntry as jest.MockedFunction<typeof addTanahGarapanEntry>
 const mockUpdateTanahGarapanEntry = updateTanahGarapanEntry as jest.MockedFunction<typeof updateTanahGarapanEntry>
+const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>
 
 describe('TanahGarapanForm', () => {
   const mockOnSuccess = jest.fn()
@@ -202,7 +205,7 @@ describe('TanahGarapanForm', () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(screen.getByText('Server error')).toBeInTheDocument()
+      expect(mockToastError).toHaveBeenCalledWith('Server error')
     })
 
     expect(mockOnSuccess).not.toHaveBeenCalled()

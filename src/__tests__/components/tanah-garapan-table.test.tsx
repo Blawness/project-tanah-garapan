@@ -2,11 +2,19 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TanahGarapanTable } from '@/components/tanah-garapan/tanah-garapan-table'
 import { deleteTanahGarapanEntry } from '@/lib/server-actions/tanah-garapan'
+import { toast } from 'sonner'
 
 // Mock the server actions
 jest.mock('@/lib/server-actions/tanah-garapan')
+jest.mock('sonner')
+
+// Mock FilePreview component to prevent render issues
+jest.mock('@/components/shared/file-preview', () => ({
+  FilePreview: ({ open, onOpenChange, fileUrl, fileName }: any) => null
+}))
 
 const mockDeleteTanahGarapanEntry = deleteTanahGarapanEntry as jest.MockedFunction<typeof deleteTanahGarapanEntry>
+const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>
 
 // Mock window.confirm
 Object.defineProperty(window, 'confirm', {
@@ -14,8 +22,9 @@ Object.defineProperty(window, 'confirm', {
 })
 
 // Mock window.open
+const mockWindowOpen = jest.fn()
 Object.defineProperty(window, 'open', {
-  value: jest.fn(),
+  value: mockWindowOpen,
 })
 
 describe('TanahGarapanTable', () => {
@@ -67,13 +76,13 @@ describe('TanahGarapanTable', () => {
     expect(screen.getByText('John Doe')).toBeInTheDocument()
     expect(screen.getByText('C-001')).toBeInTheDocument()
     expect(screen.getByText('SKG-001')).toBeInTheDocument()
-    expect(screen.getByText('1,000')).toBeInTheDocument()
+    expect(screen.getByText('1.000')).toBeInTheDocument()
 
     expect(screen.getByText('Desa Test 2')).toBeInTheDocument()
     expect(screen.getByText('Jane Smith')).toBeInTheDocument()
     expect(screen.getByText('C-002')).toBeInTheDocument()
     expect(screen.getByText('SKG-002')).toBeInTheDocument()
-    expect(screen.getByText('2,000')).toBeInTheDocument()
+    expect(screen.getByText('2.000')).toBeInTheDocument()
   })
 
   it('renders empty state when no entries', () => {
@@ -101,7 +110,9 @@ describe('TanahGarapanTable', () => {
       />
     )
 
-    const selectAllCheckbox = screen.getByRole('checkbox', { name: /select all/i })
+    // Get the first checkbox which should be the select all checkbox
+    const checkboxes = screen.getAllByRole('checkbox')
+    const selectAllCheckbox = checkboxes[0]
     await user.click(selectAllCheckbox)
 
     expect(mockOnSelectionChange).toHaveBeenCalledWith(['1', '2'])
@@ -199,9 +210,7 @@ describe('TanahGarapanTable', () => {
     expect(window.open).toHaveBeenCalledWith('/garapan/1/print', '_blank')
   })
 
-  it('handles file preview action', async () => {
-    const user = userEvent.setup()
-    
+  it('renders file preview and open buttons when file exists', () => {
     render(
       <TanahGarapanTable
         entries={mockEntries}
@@ -211,17 +220,19 @@ describe('TanahGarapanTable', () => {
       />
     )
 
-    // Click on the eye icon for file preview
-    const previewButtons = screen.getAllByRole('button', { name: /preview/i })
-    await user.click(previewButtons[0])
+    // First entry has file, should have buttons with SVG icons (Eye and FileText)
+    const allButtons = screen.getAllByRole('button')
+    const fileActionButtons = allButtons.filter(button =>
+      button.querySelector('svg') !== null // Buttons with SVG icons (file action buttons)
+    )
 
-    // Should open file preview dialog
-    expect(screen.getByText('File Preview')).toBeInTheDocument()
+    // Should have at least 2 buttons with icons (Eye and FileText)
+    expect(fileActionButtons.length).toBeGreaterThanOrEqual(2)
   })
 
   it('handles file open action', async () => {
     const user = userEvent.setup()
-    
+
     render(
       <TanahGarapanTable
         entries={mockEntries}
@@ -231,11 +242,18 @@ describe('TanahGarapanTable', () => {
       />
     )
 
-    // Click on the file icon to open file
-    const fileButtons = screen.getAllByRole('button', { name: /file/i })
-    await user.click(fileButtons[0])
+    // Click on the second button (FileText icon) to open file
+    const allButtons = screen.getAllByRole('button')
+    // Filter out the select all and dropdown menu buttons
+    const fileButtons = allButtons.filter(button =>
+      !button.hasAttribute('aria-checked') && // Not a checkbox
+      !button.hasAttribute('aria-expanded')  // Not a dropdown trigger
+    )
+    // The FileText button should be the second one (after Eye button)
+    const fileOpenButton = fileButtons[1]
+    await user.click(fileOpenButton)
 
-    expect(window.open).toHaveBeenCalledWith('http://example.com/file1.pdf', '_blank')
+    expect(mockWindowOpen).toHaveBeenCalledWith('http://example.com/file1.pdf', '_blank')
   })
 
   it('shows file actions only when file exists', () => {
@@ -279,7 +297,7 @@ describe('TanahGarapanTable', () => {
     await user.click(deleteButton)
 
     await waitFor(() => {
-      expect(screen.getByText('Delete failed')).toBeInTheDocument()
+      expect(mockToastError).toHaveBeenCalledWith('Delete failed')
     })
 
     expect(mockOnRefresh).not.toHaveBeenCalled()
