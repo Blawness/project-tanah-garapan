@@ -167,6 +167,8 @@ export default function ProyekPage() {
 
   const loadPembelianData = async () => {
     try {
+      // Load pembelian data - for now load all data since we're showing the general proyek page
+      // In the future, this could be filtered by a selected project
       const result = await getPembelianSertifikat(1, 20)
       if (result.success) {
         setPembelianData(result.data)

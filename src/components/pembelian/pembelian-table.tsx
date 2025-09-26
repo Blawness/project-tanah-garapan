@@ -102,8 +102,14 @@ export function PembelianTable({
   }
 
   useEffect(() => {
-    loadPembelianData()
-  }, [refreshTrigger])
+    // Only load data internally if no data prop is provided
+    if (!data || data.length === 0) {
+      loadPembelianData()
+    } else {
+      setPembelianData(data)
+      setIsLoading(false)
+    }
+  }, [refreshTrigger, data])
 
   const loadPembelianData = async () => {
     setIsLoading(true)
@@ -130,7 +136,11 @@ export function PembelianTable({
       const result = await deletePembelianSertifikat(id)
       if (result.success) {
         toast.success('Pembelian berhasil dihapus')
-        onRefresh ? onRefresh() : defaultRefresh()
+        if (onRefresh) {
+          onRefresh()
+        } else {
+          defaultRefresh()
+        }
       } else {
         toast.error(result.error || 'Gagal menghapus pembelian')
       }
@@ -309,7 +319,11 @@ export function PembelianTable({
         onSuccess={() => {
           setIsEditDialogOpen(false)
           setEditingPembelian(null)
-          onRefresh ? onRefresh() : defaultRefresh()
+          if (onRefresh) {
+            onRefresh()
+          } else {
+            defaultRefresh()
+          }
         }}
       />
 

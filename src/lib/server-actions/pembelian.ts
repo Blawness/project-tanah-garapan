@@ -75,6 +75,10 @@ export async function getPembelianSertifikat(page: number = 1, pageSize: number 
         ...item.proyek,
         budgetTotal: Number(item.proyek.budgetTotal),
         budgetTerpakai: Number(item.proyek.budgetTerpakai)
+      } : null,
+      tanahGarapan: item.tanahGarapan ? {
+        ...item.tanahGarapan,
+        luas: Number(item.tanahGarapan.luas)
       } : null
     }))
 
