@@ -245,3 +245,4 @@ export function AdvancedSearch({ onSearch, onClear, locations }: AdvancedSearchP
   )
 }
 
+

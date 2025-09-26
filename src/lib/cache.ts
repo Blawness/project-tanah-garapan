@@ -76,3 +76,4 @@ export const getCachedTanahGarapanStats = cache(async () => {
     entriesByMonth: entriesByMonth.slice(0, 12) // Last 12 months
   }
 })
+
