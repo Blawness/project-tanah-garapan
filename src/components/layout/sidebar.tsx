@@ -33,13 +33,13 @@ const navigation = [
   },
   {
     name: 'Proyek Pembangunan',
-    href: '/proyek',
+    href: '/proyek-management',
     icon: Building2,
     roles: ['MANAGER', 'ADMIN', 'DEVELOPER']
   },
   {
     name: 'Pembelian Sertifikat',
-    href: '/pembelian',
+    href: '/pembelian-management',
     icon: ShoppingCart,
     roles: ['MANAGER', 'ADMIN', 'DEVELOPER']
   },

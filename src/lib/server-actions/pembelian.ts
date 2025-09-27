@@ -21,8 +21,38 @@ import {
 import {
   addPembayaranPembelian
 } from '../../features/pembelian/services/pembayaran-operations'
-import type { PembelianFormData } from '../../features/pembelian/components/pembelian-form-schema'
-import type { PembayaranFormData } from '../../features/pembelian/services/pembayaran-operations'
+
+// Type definitions to avoid import issues
+export interface PembelianFormData {
+  proyekId: string
+  tanahGarapanId: string
+  namaWarga: string
+  alamatWarga: string
+  noKtpWarga: string
+  noHpWarga: string
+  hargaBeli: number
+  statusPembelian: 'NEGOTIATION' | 'AGREED' | 'CONTRACT_SIGNED' | 'PAID' | 'CERTIFICATE_ISSUED' | 'COMPLETED' | 'CANCELLED'
+  tanggalKontrak?: string | null
+  tanggalPembayaran?: string | null
+  metodePembayaran?: 'CASH' | 'TRANSFER' | 'QRIS' | 'E_WALLET' | 'BANK_TRANSFER' | null
+  buktiPembayaran?: string | null
+  keterangan?: string | null
+  nomorSertifikat?: string | null
+  fileSertifikat?: string | null
+  statusSertifikat?: 'PENDING' | 'PROCESSING' | 'ISSUED' | 'DELIVERED' | null
+}
+
+export interface PembayaranFormData {
+  pembelianId: string
+  nomorPembayaran: string
+  jumlahPembayaran: number
+  jenisPembayaran: 'DP' | 'CICILAN' | 'PELUNASAN' | 'BONUS'
+  metodePembayaran: 'CASH' | 'TRANSFER' | 'QRIS' | 'E_WALLET' | 'BANK_TRANSFER'
+  tanggalPembayaran: string
+  statusPembayaran: 'PENDING' | 'VERIFIED' | 'REJECTED'
+  buktiPembayaran?: string
+  keterangan?: string
+}
 
 // Re-export functions for backward compatibility
 export {
@@ -37,8 +67,4 @@ export {
   addPembayaranPembelian
 }
 
-// Re-export types for backward compatibility
-export type {
-  PembelianFormData,
-  PembayaranFormData
-}
+// Types are defined locally above

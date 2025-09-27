@@ -7,13 +7,17 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // Protect all routes except login and public assets
+        // Protect all routes except login, public assets, and API routes
         if (req.nextUrl.pathname.startsWith('/login')) {
           return true
         }
-        
+
         if (req.nextUrl.pathname.startsWith('/api/auth')) {
           return true
+        }
+
+        if (req.nextUrl.pathname.startsWith('/api/')) {
+          return true // Allow API routes to pass through without authentication
         }
 
         // Require authentication for all other routes
