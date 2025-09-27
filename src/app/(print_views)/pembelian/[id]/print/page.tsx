@@ -264,7 +264,7 @@ export default function PrintSinglePage({ params }: PrintSinglePageProps) {
               </div>
               <div className="p-4">
                 <div className="space-y-3">
-                  {entry.pembayaran.map((payment: any, index: number) => (
+                  {entry.pembayaran.map((payment, index: number) => (
                     <div key={payment.id} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
                       <div>
                         <p className="font-medium">Pembayaran #{index + 1}</p>

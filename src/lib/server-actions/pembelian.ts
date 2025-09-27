@@ -13,16 +13,16 @@ import {
   addPembelianSertifikat,
   updatePembelianSertifikat,
   deletePembelianSertifikat
-} from '@/features/pembelian/services/pembelian-operations'
+} from '../../features/pembelian/services/pembelian-operations'
 import {
   getPembelianStats,
   getTanahGarapanAvailable
-} from '@/features/pembelian/services/pembelian-statistics'
+} from '../../features/pembelian/services/pembelian-statistics'
 import {
   addPembayaranPembelian
-} from '@/features/pembelian/services/pembayaran-operations'
-import type { PembelianFormData } from '@/features/pembelian/components/pembelian-form-schema'
-import type { PembayaranFormData } from '@/features/pembelian/services/pembayaran-operations'
+} from '../../features/pembelian/services/pembayaran-operations'
+import type { PembelianFormData } from '../../features/pembelian/components/pembelian-form-schema'
+import type { PembayaranFormData } from '../../features/pembelian/services/pembayaran-operations'
 
 // Re-export functions for backward compatibility
 export {
