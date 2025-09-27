@@ -48,14 +48,14 @@ export async function addPembayaranPembelian(data: PembayaranFormData) {
         statusPembayaran: data.statusPembayaran,
         buktiPembayaran: data.buktiPembayaran,
         keterangan: data.keterangan,
-        createdBy: session.user.name
+        createdBy: 'System'
       }
     })
 
     const serializedPembayaran = serializeDecimalObjects(pembayaran)
 
     await logActivity(
-      session.user.name,
+      'System',
       'CREATE_PEMBAYARAN',
       `Created new pembayaran: ${pembayaran.nomorPembayaran} - ${pembayaran.jumlahPembayaran}`,
       serializedPembayaran

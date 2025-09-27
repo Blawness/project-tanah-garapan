@@ -4,7 +4,7 @@
 // import { revalidatePath } from 'next/cache' // Temporarily removed for client compatibility
 // import { getServerSession } from 'next-auth'
 // import { authOptions, canManageData } from '@/lib/auth'
-// import { logActivity } from './activity'
+import { logActivity } from './activity'
 
 // Utility function to convert Decimal objects to numbers
 function serializeDecimalObjects(obj: any): any {
@@ -186,7 +186,7 @@ export async function addProyekPembangunan(data: ProyekFormData) {
         tanggalMulai: data.tanggalMulai ? new Date(data.tanggalMulai) : null,
         tanggalSelesai: data.tanggalSelesai ? new Date(data.tanggalSelesai) : null,
         budgetTotal: data.budgetTotal,
-        createdBy: session.user.name
+        createdBy: 'System'
       }
     })
 
@@ -194,7 +194,7 @@ export async function addProyekPembangunan(data: ProyekFormData) {
     const serializedProyek = serializeDecimalObjects(proyek)
 
     await logActivity(
-      session.user.name,
+      'System',
       'CREATE_PROYEK',
       `Created new proyek: ${proyek.namaProyek}`,
       serializedProyek
@@ -236,7 +236,7 @@ export async function updateProyekPembangunan(id: string, data: ProyekFormData) 
     const serializedProyek = serializeDecimalObjects(proyek)
 
     await logActivity(
-      session.user.name,
+      'System',
       'UPDATE_PROYEK',
       `Updated proyek: ${proyek.namaProyek}`,
       serializedProyek
@@ -281,7 +281,7 @@ export async function deleteProyekPembangunan(id: string) {
     })
 
     await logActivity(
-      session.user.name,
+      'System',
       'DELETE_PROYEK',
       `Deleted proyek: ${proyek.namaProyek}`,
       proyek

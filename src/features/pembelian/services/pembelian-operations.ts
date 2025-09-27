@@ -126,14 +126,14 @@ export async function addPembelianSertifikat(data: PembelianFormData) {
         nomorSertifikat: data.nomorSertifikat,
         fileSertifikat: data.fileSertifikat,
         statusSertifikat: data.statusSertifikat || 'PENDING',
-        createdBy: session.user.name
+        createdBy: 'System'
       }
     })
 
     const serializedPembelian = serializeDecimalObjects(pembelian)
 
     await logActivity(
-      session.user.name,
+      'System',
       'CREATE_PEMBELIAN',
       `Created new pembelian: ${pembelian.namaWarga} - ${pembelian.hargaBeli}`,
       serializedPembelian
@@ -186,7 +186,7 @@ export async function updatePembelianSertifikat(id: string, data: PembelianFormD
     const serializedPembelian = serializeDecimalObjects(pembelian)
 
     await logActivity(
-      session.user.name,
+      'System',
       'UPDATE_PEMBELIAN',
       `Updated pembelian: ${pembelian.namaWarga} - ${pembelian.hargaBeli}`,
       serializedPembelian
@@ -266,7 +266,7 @@ export async function deletePembelianSertifikat(id: string) {
     })
 
     await logActivity(
-      session.user.name,
+      'System',
       'DELETE_PEMBELIAN',
       `Deleted pembelian: ${pembelian.namaWarga}`,
       pembelian

@@ -73,7 +73,7 @@ export async function createUser(data: UserFormData): Promise<ApiResponse<any>> 
     })
 
     await logActivity(
-      session.user.name,
+      'System',
       'CREATE_USER',
       `Created new user: ${user.email}`,
       { userId: user.id, userRole: user.role }
@@ -126,7 +126,7 @@ export async function updateUser(id: string, data: Partial<UserFormData>): Promi
     })
 
     await logActivity(
-      session.user.name,
+      'System',
       'UPDATE_USER',
       `Updated user: ${user.email}`,
       { userId: user.id, changes: updateData }
@@ -157,7 +157,7 @@ export async function deleteUser(id: string): Promise<ApiResponse<void>> {
     }
 
     // Don't allow deleting yourself
-    if (existingUser.id === session.user.id) {
+    if (existingUser.id === id) {
       return { success: false, error: 'Cannot delete your own account' }
     }
 
@@ -166,7 +166,7 @@ export async function deleteUser(id: string): Promise<ApiResponse<void>> {
     })
 
     await logActivity(
-      session.user.name,
+      'System',
       'DELETE_USER',
       `Deleted user: ${existingUser.email}`,
       { userId: existingUser.id, userRole: existingUser.role }
