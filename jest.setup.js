@@ -1,9 +1,20 @@
 import '@testing-library/jest-dom'
 
 // Mock TextEncoder and other Node.js APIs
-const { TextEncoder, TextDecoder } = require('util')
+import { TextEncoder, TextDecoder } from 'util'
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder
+
+// Mock console methods to reduce noise in tests
+global.console = {
+  ...console,
+  // Uncomment to ignore a specific log level
+  // log: jest.fn(),
+  // debug: jest.fn(),
+  // info: jest.fn(),
+  // warn: jest.fn(),
+  // error: jest.fn(),
+}
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -174,3 +185,71 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }))
+
+// Mock matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(), // deprecated
+    removeListener: jest.fn(), // deprecated
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+})
+
+// Mock scrollTo
+Object.defineProperty(window, 'scrollTo', {
+  value: jest.fn(),
+})
+
+// Mock getComputedStyle
+Object.defineProperty(window, 'getComputedStyle', {
+  value: () => ({
+    getPropertyValue: () => '',
+  }),
+})
+
+// Mock HTMLElement.scrollIntoView
+Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+  value: jest.fn(),
+})
+
+// Mock HTMLElement.offsetHeight and offsetWidth
+Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+  value: 100,
+})
+
+Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+  value: 100,
+})
+
+// Mock HTMLElement.getBoundingClientRect
+Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+  value: () => ({
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    width: 100,
+    height: 100,
+    x: 0,
+    y: 0,
+  }),
+})
+
+// Mock crypto for secure random values
+Object.defineProperty(global, 'crypto', {
+  value: {
+    getRandomValues: (arr) => arr.map(() => Math.floor(Math.random() * 256)),
+    randomUUID: () => 'mock-uuid-' + Math.random().toString(36).substr(2, 9),
+  },
+})
+
+// Mock process.env for tests
+process.env.NEXTAUTH_URL = 'http://localhost:3000'
+process.env.NEXTAUTH_SECRET = 'test-secret'
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test'
