@@ -1,6 +1,3 @@
-'use client'
-
-import { useEffect, useState } from 'react'
 import { getTanahGarapanEntryById } from '@/lib/server-actions/tanah-garapan'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -66,18 +63,20 @@ export default function PrintSinglePage({ params }: PrintSinglePageProps) {
 
   return (
     <div className="min-h-screen bg-white p-8 print:p-4">
-      <style jsx global>{`
-        @media print {
-          body { margin: 0; }
-          .no-print { display: none !important; }
-          .print-page { 
-            width: 100% !important; 
-            margin: 0 !important; 
-            padding: 1rem !important;
-            box-shadow: none !important;
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+            .print-page {
+              width: 100% !important;
+              margin: 0 !important;
+              padding: 1rem !important;
+              box-shadow: none !important;
+            }
           }
-        }
-      `}</style>
+        `
+      }} />
 
       <div className="max-w-4xl mx-auto print-page">
         {/* Letterhead */}

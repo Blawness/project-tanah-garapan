@@ -1,6 +1,3 @@
-'use client'
-
-import { useEffect, useState } from 'react'
 import { getPembelianSertifikatById } from '@/lib/server-actions/pembelian'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
@@ -41,47 +38,18 @@ interface PembelianData {
   }>
 }
 
-export default function PrintSinglePage({ params }: PrintSinglePageProps) {
-  const [entry, setEntry] = useState<PembelianData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+export default async function PrintSinglePage({ params }: PrintSinglePageProps) {
+  const result = await getPembelianSertifikatById(params.id)
 
-  useEffect(() => {
-    const fetchEntry = async () => {
-      const result = await getPembelianSertifikatById(params.id)
-      if (result.success) {
-        setEntry(result.data)
-      }
-      setIsLoading(false)
-    }
-
-    fetchEntry()
-  }, [params.id])
-
-  useEffect(() => {
-    if (!isLoading && entry) {
-      // Auto-trigger print dialog after data loads
-      window.print()
-    }
-  }, [isLoading, entry])
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!entry) {
+  if (!result.success || !result.data) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Data tidak ditemukan</p>
       </div>
     )
   }
+
+  const entry = result.data
 
   const formatDate = (date: string | Date) => {
     if (!date) return '-'
@@ -133,18 +101,20 @@ export default function PrintSinglePage({ params }: PrintSinglePageProps) {
 
   return (
     <div className="min-h-screen bg-white p-8 print:p-4">
-      <style jsx global>{`
-        @media print {
-          body { margin: 0; }
-          .no-print { display: none !important; }
-          .print-page {
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 1rem !important;
-            box-shadow: none !important;
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+            .print-page {
+              width: 100% !important;
+              margin: 0 !important;
+              padding: 1rem !important;
+              box-shadow: none !important;
+            }
           }
-        }
-      `}</style>
+        `
+      }} />
 
       <div className="max-w-4xl mx-auto print-page">
         {/* Letterhead */}

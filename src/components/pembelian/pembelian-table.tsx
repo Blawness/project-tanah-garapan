@@ -142,16 +142,29 @@ export function PembelianTable({
 
   const handleDelete = async (id: string, namaWarga: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus pembelian dari "${namaWarga}"?`)) {
-      const result = await deletePembelianSertifikat(id)
-      if (result.success) {
-        toast.success('Pembelian berhasil dihapus')
-        if (onRefresh) {
-          onRefresh()
+      try {
+        const result = await fetch('/api/pembelian', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id }),
+        })
+
+        const data = await result.json()
+
+        if (data.success) {
+          toast.success('Pembelian berhasil dihapus')
+          if (onRefresh) {
+            onRefresh()
+          } else {
+            defaultRefresh()
+          }
         } else {
-          defaultRefresh()
+          toast.error(data.error || 'Gagal menghapus pembelian')
         }
-      } else {
-        toast.error(result.error || 'Gagal menghapus pembelian')
+      } catch (error) {
+        toast.error('Terjadi kesalahan saat menghapus pembelian')
       }
     }
   }

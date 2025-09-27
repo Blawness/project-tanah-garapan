@@ -4,8 +4,6 @@
  * This file is kept for backward compatibility during migration
  */
 
-'use server'
-
 import {
   getPembelianSertifikat,
   getPembelianSertifikatById,

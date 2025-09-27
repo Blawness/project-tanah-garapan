@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { getTanahGarapanEntriesByIds } from '@/lib/server-actions/tanah-garapan'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

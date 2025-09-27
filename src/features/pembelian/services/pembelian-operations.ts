@@ -3,8 +3,10 @@
  * Handles CRUD operations, validation, and business rules
  */
 
+'use server'
+
 import { prisma } from '@/lib/prisma'
-import { revalidatePath } from 'next/cache'
+// import { revalidatePath } from 'next/cache' // Temporarily removed for client compatibility
 import { getServerSession } from 'next-auth'
 import { authOptions, canManageData } from '@/lib/auth'
 import { logActivity } from '@/lib/server-actions/activity'
@@ -137,8 +139,8 @@ export async function addPembelianSertifikat(data: PembelianFormData) {
       serializedPembelian
     )
 
-    revalidatePath('/pembelian')
-    revalidatePath(`/proyek/${data.proyekId}`)
+    // revalidatePath('/pembelian') // Temporarily disabled for client compatibility
+    // revalidatePath(`/proyek/${data.proyekId}`) // Temporarily disabled for client compatibility
     return { success: true, data: serializedPembelian, message: 'Pembelian created successfully' }
   } catch (error) {
     console.error('Error creating pembelian:', error)
@@ -190,8 +192,8 @@ export async function updatePembelianSertifikat(id: string, data: PembelianFormD
       serializedPembelian
     )
 
-    revalidatePath('/pembelian')
-    revalidatePath(`/proyek/${data.proyekId}`)
+    // revalidatePath('/pembelian') // Temporarily disabled for client compatibility
+    // revalidatePath(`/proyek/${data.proyekId}`) // Temporarily disabled for client compatibility
     return { success: true, data: serializedPembelian, message: 'Pembelian updated successfully' }
   } catch (error) {
     console.error('Error updating pembelian:', error)
@@ -270,8 +272,8 @@ export async function deletePembelianSertifikat(id: string) {
       pembelian
     )
 
-    revalidatePath('/pembelian')
-    revalidatePath(`/proyek/${pembelian.proyekId}`)
+    // revalidatePath('/pembelian') // Temporarily disabled for client compatibility
+    // revalidatePath(`/proyek/${pembelian.proyekId}`) // Temporarily disabled for client compatibility
     return { success: true, message: 'Pembelian deleted successfully' }
   } catch (error) {
     console.error('Error deleting pembelian:', error)

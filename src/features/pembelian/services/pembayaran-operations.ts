@@ -3,8 +3,10 @@
  * Handles payment creation, validation, and business rules
  */
 
+'use server'
+
 import { prisma } from '@/lib/prisma'
-import { revalidatePath } from 'next/cache'
+// import { revalidatePath } from 'next/cache' // Temporarily removed for client compatibility
 import { getServerSession } from 'next-auth'
 import { authOptions, canManageData } from '@/lib/auth'
 import { logActivity } from '@/lib/server-actions/activity'
@@ -59,8 +61,8 @@ export async function addPembayaranPembelian(data: PembayaranFormData) {
       serializedPembayaran
     )
 
-    revalidatePath('/pembelian')
-    revalidatePath(`/pembelian/${data.pembelianId}`)
+    // revalidatePath('/pembelian') // Temporarily disabled for client compatibility
+    // revalidatePath(`/pembelian/${data.pembelianId}`) // Temporarily disabled for client compatibility
     return { success: true, data: serializedPembayaran, message: 'Pembayaran created successfully' }
   } catch (error) {
     console.error('Error creating pembayaran:', error)

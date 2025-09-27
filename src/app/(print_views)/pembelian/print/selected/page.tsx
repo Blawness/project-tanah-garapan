@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { getPembelianSertifikatByIds } from '@/lib/server-actions/pembelian'
 import { Separator } from '@/components/ui/separator'
@@ -141,19 +141,21 @@ export default function PrintSelectedPage() {
 
   return (
     <div className="min-h-screen bg-white p-8 print:p-4">
-      <style jsx global>{`
-        @media print {
-          body { margin: 0; }
-          .no-print { display: none !important; }
-          .print-page {
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 1rem !important;
-            box-shadow: none !important;
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+            .print-page {
+              width: 100% !important;
+              margin: 0 !important;
+              padding: 1rem !important;
+              box-shadow: none !important;
+            }
+            .page-break { page-break-before: always; }
           }
-          .page-break { page-break-before: always; }
-        }
-      `}</style>
+        `
+      }} />
 
       <div className="max-w-4xl mx-auto print-page">
         {/* Header */}

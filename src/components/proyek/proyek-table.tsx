@@ -67,12 +67,25 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
 
   const handleDelete = async (id: string, namaProyek: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus proyek "${namaProyek}"?`)) {
-      const result = await deleteProyekPembangunan(id)
-      if (result.success) {
-        toast.success('Proyek berhasil dihapus')
-        onRefresh()
-      } else {
-        toast.error(result.error || 'Gagal menghapus proyek')
+      try {
+        const result = await fetch('/api/proyek', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id }),
+        })
+
+        const data = await result.json()
+
+        if (data.success) {
+          toast.success('Proyek berhasil dihapus')
+          onRefresh()
+        } else {
+          toast.error(data.error || 'Gagal menghapus proyek')
+        }
+      } catch (error) {
+        toast.error('Terjadi kesalahan saat menghapus proyek')
       }
     }
   }

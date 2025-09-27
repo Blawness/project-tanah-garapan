@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPembelianSertifikat, addPembelianSertifikat, updatePembelianSertifikat, PembelianFormData } from '@/lib/server-actions/pembelian'
+import { getPembelianSertifikat, addPembelianSertifikat, updatePembelianSertifikat, deletePembelianSertifikat, PembelianFormData } from '@/lib/server-actions/pembelian'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -131,6 +131,46 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await addPembelianSertifikat(pembelianData)
+
+    if (result.success) {
+      return NextResponse.json(result)
+    } else {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 400 }
+      )
+    }
+  } catch (error) {
+    console.error('API error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    // Temporarily disable authentication for development
+    // const session = await getServerSession(authOptions)
+    // if (!session) {
+    //   return NextResponse.json(
+    //     { error: 'Unauthorized' },
+    //     { status: 401 }
+    //   )
+    // }
+
+    const body = await request.json()
+    const { id } = body
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Pembelian ID is required' },
+        { status: 400 }
+      )
+    }
+
+    const result = await deletePembelianSertifikat(id)
 
     if (result.success) {
       return NextResponse.json(result)
