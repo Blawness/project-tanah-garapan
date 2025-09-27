@@ -1,0 +1,43 @@
+/**
+ * Utility functions for serializing data to/from database
+ * Handles Prisma Decimal objects and other serialization needs
+ */
+
+/**
+ * Recursively converts Prisma Decimal objects to regular JavaScript numbers
+ * Handles nested objects, arrays, and preserves null/undefined values
+ */
+export function serializeDecimalObjects(obj: any): any {
+  if (obj === null || obj === undefined) return obj
+
+  if (typeof obj === 'object') {
+    // Handle Prisma Decimal objects
+    if (obj.constructor && obj.constructor.name === 'Decimal') {
+      return Number(obj)
+    }
+
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map(item => serializeDecimalObjects(item))
+    }
+
+    // Handle objects
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeDecimalObjects(value)
+    }
+    return serialized
+  }
+
+  return obj
+}
+
+/**
+ * Safely converts a value to a number, handling null/undefined
+ */
+export function safeNumber(value: any): number {
+  if (value === null || value === undefined) return 0
+  const num = Number(value)
+  return isNaN(num) ? 0 : num
+}
+

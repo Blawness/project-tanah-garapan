@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { MoreHorizontal, Edit, Trash2, Eye, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { MoreHorizontal, Edit, Trash2, Eye, Plus, ChevronLeft, ChevronRight, Printer } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { PembelianForm } from './pembelian-form'
 import { PembayaranTable } from './pembayaran-table'
+import { PrintButton } from './print-button'
 import { deletePembelianSertifikat } from '@/lib/server-actions/pembelian'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -45,7 +47,13 @@ interface PembelianTableProps {
       namaPemegangHak: string
       luas: number
     }
-    pembayaran?: Array<any>
+    pembayaran?: Array<{
+      id: string
+      jenisPembayaran: string
+      jumlahPembayaran: number
+      tanggalPembayaran: string
+      statusPembayaran: string
+    }>
   }>
   onRefresh?: () => void
   onCreateNew?: (proyekId?: string) => void
@@ -95,6 +103,7 @@ export function PembelianTable({
   const [selectedPembelian, setSelectedPembelian] = useState<PembelianTableProps['data'] extends Array<infer T> ? T | null : null>(null)
   const [pembelianData, setPembelianData] = useState<PembelianTableProps['data']>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   // Default refresh function if not provided
   const defaultRefresh = () => {
@@ -152,6 +161,25 @@ export function PembelianTable({
     setIsDetailDialogOpen(true)
   }
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && pembelianData) {
+      setSelectedIds(pembelianData.map(item => item.id))
+    } else {
+      setSelectedIds([])
+    }
+  }
+
+  const handleSelectItem = (pembelianId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds(prev => [...prev, pembelianId])
+    } else {
+      setSelectedIds(prev => prev.filter(id => id !== pembelianId))
+    }
+  }
+
+  const isAllSelected = pembelianData && pembelianData.length > 0 && selectedIds.length === pembelianData.length
+  const isIndeterminate = selectedIds.length > 0 && selectedIds.length < pembelianData.length
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -170,17 +198,35 @@ export function PembelianTable({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Pembelian Sertifikat</CardTitle>
-          {onCreateNew && (
-            <Button onClick={() => onCreateNew(proyekId)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Pembelian
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {selectedIds.length > 0 && (
+              <PrintButton
+                selectedIds={selectedIds}
+                variant="bulk"
+                size="sm"
+              />
+            )}
+            {onCreateNew && (
+              <Button onClick={() => onCreateNew(proyekId)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Pembelian
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isIndeterminate
+                    }}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Nama Warga</TableHead>
                 <TableHead>Tanah Garapan</TableHead>
                 <TableHead>Harga Beli</TableHead>
@@ -194,12 +240,18 @@ export function PembelianTable({
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                     Memuat data...
                   </TableCell>
                 </TableRow>
               ) : pembelianData && pembelianData.length > 0 ? pembelianData.map((pembelian) => (
                 <TableRow key={pembelian.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.includes(pembelian.id)}
+                      onCheckedChange={(checked) => handleSelectItem(pembelian.id, !!checked)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{pembelian.namaWarga}</TableCell>
                   <TableCell>
                     <div>
@@ -233,6 +285,12 @@ export function PembelianTable({
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          onClick={() => window.open(`/pembelian/${pembelian.id}/print`, '_blank')}
+                        >
+                          <Printer className="h-4 w-4 mr-2" />
+                          Cetak Invoice
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => handleDelete(pembelian.id, pembelian.namaWarga)}
                           className="text-red-600"
                         >
@@ -245,7 +303,7 @@ export function PembelianTable({
                 </TableRow>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                     Belum ada data pembelian sertifikat
                   </TableCell>
                 </TableRow>

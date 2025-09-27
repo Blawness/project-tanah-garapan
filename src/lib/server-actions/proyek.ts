@@ -6,6 +6,32 @@ import { getServerSession } from 'next-auth'
 import { authOptions, canManageData } from '@/lib/auth'
 import { logActivity } from './activity'
 
+// Utility function to convert Decimal objects to numbers
+function serializeDecimalObjects(obj: any): any {
+  if (obj === null || obj === undefined) return obj
+
+  if (typeof obj === 'object') {
+    // Handle Prisma Decimal objects
+    if (obj.constructor && obj.constructor.name === 'Decimal') {
+      return Number(obj)
+    }
+
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map(item => serializeDecimalObjects(item))
+    }
+
+    // Handle objects
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeDecimalObjects(value)
+    }
+    return serialized
+  }
+
+  return obj
+}
+
 export interface ProyekFormData {
   namaProyek: string
   lokasiProyek: string
@@ -58,11 +84,7 @@ export async function getProyekPembangunan(page: number = 1, pageSize: number = 
     ])
 
     // Convert Decimal objects to numbers for Client Component compatibility
-    const serializedProyek = proyek.map(item => ({
-      ...item,
-      budgetTotal: Number(item.budgetTotal),
-      budgetTerpakai: Number(item.budgetTerpakai)
-    }))
+    const serializedProyek = serializeDecimalObjects(proyek)
 
     const totalPages = Math.ceil(total / pageSize)
 
@@ -106,11 +128,7 @@ export async function getProyekPembangunanById(id: string) {
     }
 
     // Convert Decimal objects to numbers for Client Component compatibility
-    const serializedProyek = {
-      ...proyek,
-      budgetTotal: Number(proyek.budgetTotal),
-      budgetTerpakai: Number(proyek.budgetTerpakai)
-    }
+    const serializedProyek = serializeDecimalObjects(proyek)
 
     return { success: true, data: serializedProyek }
   } catch (error) {
@@ -140,11 +158,7 @@ export async function addProyekPembangunan(data: ProyekFormData) {
     })
 
     // Convert Decimal objects to numbers for Client Component compatibility
-    const serializedProyek = {
-      ...proyek,
-      budgetTotal: Number(proyek.budgetTotal),
-      budgetTerpakai: Number(proyek.budgetTerpakai)
-    }
+    const serializedProyek = serializeDecimalObjects(proyek)
 
     await logActivity(
       session.user.name,
@@ -185,11 +199,7 @@ export async function updateProyekPembangunan(id: string, data: ProyekFormData) 
     })
 
     // Convert Decimal objects to numbers for Client Component compatibility
-    const serializedProyek = {
-      ...proyek,
-      budgetTotal: Number(proyek.budgetTotal),
-      budgetTerpakai: Number(proyek.budgetTerpakai)
-    }
+    const serializedProyek = serializeDecimalObjects(proyek)
 
     await logActivity(
       session.user.name,
@@ -280,10 +290,10 @@ export async function getProyekStats() {
         totalProyek,
         totalBudget: Number(totalBudget._sum.budgetTotal) || 0,
         totalTerpakai: Number(totalTerpakai._sum.budgetTerpakai) || 0,
-        proyekByStatus: proyekByStatus.reduce((acc, item) => {
+        proyekByStatus: serializeDecimalObjects(proyekByStatus.reduce((acc, item) => {
           acc[item.statusProyek] = item._count.id
           return acc
-        }, {} as Record<string, number>)
+        }, {} as Record<string, number>))
       }
     }
   } catch (error) {
@@ -345,11 +355,7 @@ export async function exportProyekToCSV(search?: string, statusFilter?: string) 
     ]
 
     // Convert Decimal objects to numbers for CSV
-    const serializedProyek = proyek.map(item => ({
-      ...item,
-      budgetTotal: Number(item.budgetTotal),
-      budgetTerpakai: Number(item.budgetTerpakai)
-    }))
+    const serializedProyek = serializeDecimalObjects(proyek)
 
     const csvData = serializedProyek.map(item => [
       item.id,
