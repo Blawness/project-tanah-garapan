@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { getTanahGarapanEntriesByLetakTanah } from '@/lib/server-actions/tanah-garapan'
+// Server actions are now called through API routes
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
@@ -19,9 +19,19 @@ export default function PrintGroupByLocationPage() {
         return
       }
 
-      const result = await getTanahGarapanEntriesByLetakTanah(decodeURIComponent(location))
-      if (result.success) {
-        setEntries(result.data || [])
+      try {
+        const response = await fetch(`/api/tanah-garapan`)
+        const result = await response.json()
+
+        if (result.success) {
+          // Filter entries by location
+          const filteredEntries = result.data.filter((entry: any) =>
+            entry.letakTanah.toLowerCase().includes(decodeURIComponent(location).toLowerCase())
+          )
+          setEntries(filteredEntries || [])
+        }
+      } catch (error) {
+        console.error('Error fetching entries:', error)
       }
       setIsLoading(false)
     }

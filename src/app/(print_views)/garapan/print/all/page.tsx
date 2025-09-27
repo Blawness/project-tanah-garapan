@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getTanahGarapanEntries } from '@/lib/server-actions/tanah-garapan'
+// Server actions are now called through API routes
 import { Separator } from '@/components/ui/separator'
 
 export default function PrintAllPage() {
@@ -10,11 +10,18 @@ export default function PrintAllPage() {
 
   useEffect(() => {
     const fetchEntries = async () => {
-      const result = await getTanahGarapanEntries()
-      if (result.success) {
-        setEntries(result.data || [])
+      try {
+        const response = await fetch('/api/tanah-garapan')
+        const result = await response.json()
+
+        if (result.success) {
+          setEntries(result.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching entries:', error)
+      } finally {
+        setIsLoading(false)
       }
-      setIsLoading(false)
     }
 
     fetchEntries()

@@ -19,16 +19,31 @@ import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-export default function ProyekPage() {
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [proyekData, setProyekData] = useState<{
+interface ProyekPageProps {
+  initialProyekData: {
     data: any[]
     total: number
     totalPages: number
     currentPage: number
     pageSize: number
-  } | null>(null)
-  const [stats, setStats] = useState({
+  } | null
+  initialStats: {
+    totalProyek: number
+    totalBudget: number
+    totalTerpakai: number
+    proyekByStatus: {
+      PLANNING: number
+      ONGOING: number
+      COMPLETED: number
+      CANCELLED: number
+    }
+  } | null
+}
+
+export default function ProyekPage({ initialProyekData, initialStats }: ProyekPageProps) {
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [proyekData, setProyekData] = useState(initialProyekData)
+  const [stats, setStats] = useState(initialStats || {
     totalProyek: 0,
     totalBudget: 0,
     totalTerpakai: 0,
@@ -39,9 +54,9 @@ export default function ProyekPage() {
       CANCELLED: 0
     }
   })
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingStats, setIsLoadingStats] = useState(true)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingStats, setIsLoadingStats] = useState(false)
+  const [currentPage, setCurrentPage] = useState(initialProyekData?.currentPage || 1)
   const pageSize = 20
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
@@ -85,7 +100,7 @@ export default function ProyekPage() {
     return labels[status as keyof typeof labels] || status
   }
 
-  const loadProyekData = async (page: number = 1) => {
+  const loadProyekData = async (page: number = currentPage) => {
     try {
       setIsLoading(true)
       const search = searchQuery.trim() || undefined
@@ -105,6 +120,7 @@ export default function ProyekPage() {
 
   const loadStats = async () => {
     try {
+      setIsLoadingStats(true)
       const result = await getProyekStats()
       if (result.success) {
         setStats(result.data)
@@ -121,7 +137,7 @@ export default function ProyekPage() {
   useEffect(() => {
     loadProyekData(currentPage)
     loadStats()
-  }, [currentPage])
+  }, [currentPage, searchQuery, statusFilter])
 
   useEffect(() => {
     loadPembelianData()
@@ -136,7 +152,6 @@ export default function ProyekPage() {
     setSearchQuery('')
     setStatusFilter('ALL')
     setCurrentPage(1)
-    loadProyekData(1)
   }
 
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {

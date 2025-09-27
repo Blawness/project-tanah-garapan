@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { exportTanahGarapanToCSV, getTanahGarapanEntriesByIds, getTanahGarapanEntries } from '@/lib/server-actions/tanah-garapan'
+// Server actions are now called through API routes
 import { canManageData } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,7 +32,8 @@ export function ExportButton({ selectedIds, onPrintSelected }: ExportButtonProps
   const handleExportCSV = async () => {
     setIsExporting(true)
     try {
-      const result = await exportTanahGarapanToCSV()
+      const response = await fetch('/api/tanah-garapan')
+      const result = await response.json()
       if (result.success && result.data) {
         // Create and download CSV file
         const blob = new Blob([result.data], { type: 'text/csv;charset=utf-8;' })
@@ -89,7 +90,8 @@ export function ExportButton({ selectedIds, onPrintSelected }: ExportButtonProps
     
     setIsLoadingLocations(true)
     try {
-      const result = await getTanahGarapanEntries()
+      const response = await fetch('/api/tanah-garapan')
+      const result = await response.json()
       if (result.success && result.data) {
         // Extract unique locations
         const uniqueLocations = [...new Set(

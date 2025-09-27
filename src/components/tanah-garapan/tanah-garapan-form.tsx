@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { TanahGarapanFormData, tanahGarapanSchema } from '@/lib/types'
-import { addTanahGarapanEntry, updateTanahGarapanEntry } from '@/lib/server-actions/tanah-garapan'
+// Server actions are now called through API routes
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -63,9 +63,15 @@ export function TanahGarapanForm({
 
       console.log('Submitting data:', cleanData) // Debug log
 
-      const result = isEdit
-        ? await updateTanahGarapanEntry(entry.id, cleanData)
-        : await addTanahGarapanEntry(cleanData)
+      const response = await fetch('/api/tanah-garapan', {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(isEdit ? { id: entry.id, ...cleanData } : cleanData),
+      })
+
+      const result = await response.json()
 
       if (result.success) {
         toast.success(result.message || `Entry ${isEdit ? 'updated' : 'created'} successfully`)

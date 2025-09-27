@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { getTanahGarapanEntries, searchTanahGarapanEntries, advancedSearchTanahGarapanEntries } from '@/lib/server-actions/tanah-garapan'
+// Server actions are now called through API routes
 import { canManageData } from '@/lib/auth'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Button } from '@/components/ui/button'
@@ -36,7 +36,9 @@ export default function TanahGarapanPage() {
   const fetchEntries = async (page: number = pagination.currentPage, pageSize: number = pagination.pageSize) => {
     setIsLoading(true)
     try {
-      const result = await getTanahGarapanEntries(page, pageSize)
+      const response = await fetch(`/api/tanah-garapan?page=${page}&pageSize=${pageSize}`)
+      const result = await response.json()
+
       if (result.success && result.data) {
         setEntries(result.data.data || [])
         setPagination({
@@ -46,10 +48,11 @@ export default function TanahGarapanPage() {
           totalItems: result.data.total
         })
         // Extract unique locations from all data (not just current page)
-        const allEntriesResult = await getTanahGarapanEntries(1, 1000) // Get all for locations
-        if (allEntriesResult.success && allEntriesResult.data) {
+        const allResponse = await fetch('/api/tanah-garapan?page=1&pageSize=1000')
+        const allResult = await allResponse.json()
+        if (allResult.success && allResult.data) {
           const uniqueLocations = [...new Set(
-            (allEntriesResult.data.data || []).map((entry: any) => entry.letakTanah.split(',')[0].trim())
+            (allResult.data.data || []).map((entry: any) => entry.letakTanah.split(',')[0].trim())
           )].sort()
           setLocations(uniqueLocations)
         }

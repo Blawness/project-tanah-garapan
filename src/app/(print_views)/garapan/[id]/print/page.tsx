@@ -1,4 +1,4 @@
-import { getTanahGarapanEntryById } from '@/lib/server-actions/tanah-garapan'
+// Server actions are now called through API routes
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
@@ -12,11 +12,20 @@ export default function PrintSinglePage({ params }: PrintSinglePageProps) {
 
   useEffect(() => {
     const fetchEntry = async () => {
-      const result = await getTanahGarapanEntryById(params.id)
-      if (result.success) {
-        setEntry(result.data)
+      try {
+        const response = await fetch('/api/tanah-garapan')
+        const result = await response.json()
+
+        if (result.success) {
+          // Find the entry with the matching ID
+          const foundEntry = result.data.find((item: any) => item.id === params.id)
+          setEntry(foundEntry)
+        }
+      } catch (error) {
+        console.error('Error fetching entry:', error)
+      } finally {
+        setIsLoading(false)
       }
-      setIsLoading(false)
     }
 
     fetchEntry()

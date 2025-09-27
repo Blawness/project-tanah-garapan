@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { getTanahGarapanEntriesByIds } from '@/lib/server-actions/tanah-garapan'
+// Server actions are now called through API routes
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
@@ -14,17 +14,26 @@ export default function PrintSelectedPage() {
   useEffect(() => {
     const fetchEntries = async () => {
       const ids = searchParams.get('ids')?.split(',') || []
-      
+
       if (ids.length === 0) {
         setIsLoading(false)
         return
       }
 
-      const result = await getTanahGarapanEntriesByIds(ids)
-      if (result.success) {
-        setEntries(result.data || [])
+      try {
+        const response = await fetch(`/api/tanah-garapan`)
+        const result = await response.json()
+
+        if (result.success) {
+          // Filter entries by IDs
+          const filteredEntries = result.data.filter((entry: any) => ids.includes(entry.id))
+          setEntries(filteredEntries || [])
+        }
+      } catch (error) {
+        console.error('Error fetching entries:', error)
+      } finally {
+        setIsLoading(false)
       }
-      setIsLoading(false)
     }
 
     fetchEntries()

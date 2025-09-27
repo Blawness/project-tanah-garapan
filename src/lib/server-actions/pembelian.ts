@@ -1,3 +1,5 @@
+'use server'
+
 /**
  * Legacy pembelian server actions - DEPRECATED
  * Use the new modular services from src/features/pembelian/services/

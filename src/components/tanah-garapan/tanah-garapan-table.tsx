@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { deleteTanahGarapanEntry } from '@/lib/server-actions/tanah-garapan'
+// Server actions are now called through API routes
 import { canManageData } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -75,7 +75,16 @@ export function TanahGarapanTable({
 
     setIsDeleting(id)
     try {
-      const result = await deleteTanahGarapanEntry(id)
+      const response = await fetch('/api/tanah-garapan', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      })
+
+      const result = await response.json()
+
       if (result.success) {
         toast.success(result.message || 'Entry deleted successfully')
         onRefresh()

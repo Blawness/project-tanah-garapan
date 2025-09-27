@@ -1,3 +1,5 @@
+'use server'
+
 // import { prisma } from '@/lib/prisma'
 // import { revalidatePath } from 'next/cache' // Temporarily removed for client compatibility
 // import { getServerSession } from 'next-auth'
@@ -8,26 +10,38 @@
 function serializeDecimalObjects(obj: any): any {
   if (obj === null || obj === undefined) return obj
 
-  if (typeof obj === 'object') {
-    // Handle Prisma Decimal objects
-    if (obj.constructor && obj.constructor.name === 'Decimal') {
-      return Number(obj)
-    }
-
-    // Handle arrays
-    if (Array.isArray(obj)) {
-      return obj.map(item => serializeDecimalObjects(item))
-    }
-
-    // Handle objects
-    const serialized: any = {}
-    for (const [key, value] of Object.entries(obj)) {
-      serialized[key] = serializeDecimalObjects(value)
-    }
-    return serialized
+  if (typeof obj !== 'object') {
+    return obj
   }
 
-  return obj
+  // Handle Prisma Decimal objects
+  if (obj.constructor && obj.constructor.name === 'Decimal') {
+    return Number(obj)
+  }
+
+  // Handle Date objects
+  if (obj instanceof Date) {
+    return obj.toISOString()
+  }
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => serializeDecimalObjects(item))
+  }
+
+  // Handle plain objects recursively
+  const serialized: Record<string, any> = {}
+  for (const key in obj) {
+    // Ensure it's an own property to avoid prototype chain issues
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key]
+      // Only serialize if it's not a function
+      if (typeof value !== 'function') {
+        serialized[key] = serializeDecimalObjects(value)
+      }
+    }
+  }
+  return serialized
 }
 
 export interface ProyekFormData {

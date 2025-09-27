@@ -9,8 +9,29 @@ import { PembelianTable } from '@/components/pembelian/pembelian-table'
 import { PembelianDashboard } from '@/components/pembelian/pembelian-dashboard'
 import { getPembelianStats } from '@/lib/server-actions/pembelian'
 
-export default function PembelianPage() {
-  const [stats, setStats] = useState({
+interface PembelianPageProps {
+  initialStats: {
+    totalPembelian: number
+    totalHarga: number
+    pembelianByStatus: {
+      NEGOTIATION: number
+      AGREED: number
+      CONTRACT_SIGNED: number
+      PAID: number
+      CERTIFICATE_ISSUED: number
+      COMPLETED: number
+      CANCELLED: number
+    }
+    pembayaranByStatus: {
+      PENDING: number
+      VERIFIED: number
+      REJECTED: number
+    }
+  } | null
+}
+
+export default function PembelianPage({ initialStats }: PembelianPageProps) {
+  const [stats, setStats] = useState(initialStats || {
     totalPembelian: 0,
     totalHarga: 0,
     pembelianByStatus: {
@@ -28,12 +49,10 @@ export default function PembelianPage() {
       REJECTED: 0
     }
   })
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  useEffect(() => {
-    loadStats()
-  }, [])
+  // Remove useEffect for initial data loading
 
   const loadStats = async () => {
     setLoading(true)
