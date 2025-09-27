@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -51,20 +51,40 @@ export function ProyekForm({
   const form = useForm<ProyekFormData>({
     resolver: zodResolver(proyekSchema),
     defaultValues: {
-      namaProyek: proyek?.namaProyek || '',
-      lokasiProyek: proyek?.lokasiProyek || '',
-      deskripsi: proyek?.deskripsi || '',
-      statusProyek: proyek?.statusProyek || 'PLANNING',
-      tanggalMulai: proyek?.tanggalMulai ? new Date(proyek.tanggalMulai).toISOString().split('T')[0] : '',
-      tanggalSelesai: proyek?.tanggalSelesai ? new Date(proyek.tanggalSelesai).toISOString().split('T')[0] : '',
-      budgetTotal: proyek?.budgetTotal || 0
+      namaProyek: '',
+      lokasiProyek: '',
+      deskripsi: '',
+      statusProyek: 'PLANNING',
+      tanggalMulai: '',
+      tanggalSelesai: '',
+      budgetTotal: 0
     },
     mode: 'onChange'
   })
 
+  // Reset form when proyek prop changes (for editing)
+  useEffect(() => {
+    if (proyek) {
+      console.log('Resetting form with proyek data:', proyek)
+      console.log('Budget total from proyek:', proyek.budgetTotal, 'type:', typeof proyek.budgetTotal)
+      form.reset({
+        namaProyek: proyek.namaProyek || '',
+        lokasiProyek: proyek.lokasiProyek || '',
+        deskripsi: proyek.deskripsi || '',
+        statusProyek: proyek.statusProyek || 'PLANNING',
+        tanggalMulai: proyek.tanggalMulai ? new Date(proyek.tanggalMulai).toISOString().split('T')[0] : '',
+        tanggalSelesai: proyek.tanggalSelesai ? new Date(proyek.tanggalSelesai).toISOString().split('T')[0] : '',
+        budgetTotal: proyek.budgetTotal ? Number(proyek.budgetTotal) : 0
+      })
+    }
+  }, [proyek, form])
+
   const onSubmit = async (data: ProyekFormData) => {
     setIsLoading(true)
-    
+
+    console.log('Form submission data:', data)
+    console.log('Budget total from form:', data.budgetTotal, 'type:', typeof data.budgetTotal)
+
     try {
       const result = isEdit
         ? await updateProyekPembangunan(proyek.id, data)
@@ -206,10 +226,15 @@ export function ProyekForm({
                 <FormItem>
                   <FormLabel>Budget Total (Rp)</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="Masukkan budget total" 
-                      {...field} 
+                    <Input
+                      type="number"
+                      step="1000"
+                      placeholder="0"
+                      value={field.value?.toString() || ''}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        field.onChange(value === '' ? 0 : Number(value))
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

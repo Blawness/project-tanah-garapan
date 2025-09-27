@@ -15,8 +15,9 @@ function serializeDecimalObjects(obj: any): any {
   }
 
   // Handle Prisma Decimal objects
-  if (obj.constructor && obj.constructor.name === 'Decimal') {
-    return Number(obj)
+  if (obj && typeof obj === 'object' && 's' in obj && 'e' in obj && 'd' in obj) {
+    // Prisma Decimal format: { s: 1, e: 3, d: [ 3909 ] }
+    return obj.toNumber ? obj.toNumber() : Number(obj)
   }
 
   // Handle Date objects
@@ -99,14 +100,34 @@ export async function getProyekPembangunan(page: number = 1, pageSize: number = 
     // Convert Decimal objects to numbers for Client Component compatibility
     const serializedProyek = serializeDecimalObjects(proyek)
 
-    // Ensure budget values are valid numbers
+    // Debug: Log the raw data to see what we're getting
+    console.log('Raw proyek data from database:')
+    proyek.forEach((item, index) => {
+      console.log(`Item ${index}:`, {
+        id: item.id,
+        namaProyek: item.namaProyek,
+        budgetTotal: item.budgetTotal,
+        budgetTerpakai: item.budgetTerpakai,
+        budgetTotalType: typeof item.budgetTotal,
+        budgetTerpakaiType: typeof item.budgetTerpakai
+      })
+    })
+    console.log('Serialized proyek data:', serializedProyek)
+
+    // Ensure budget values are valid numbers (fallback)
     serializedProyek.forEach((item: any) => {
-      if (item.budgetTotal === null || item.budgetTotal === undefined || isNaN(Number(item.budgetTotal))) {
-        item.budgetTotal = 0
+      if (item.budgetTotal && typeof item.budgetTotal === 'object' && 's' in item.budgetTotal) {
+        item.budgetTotal = item.budgetTotal.toNumber ? item.budgetTotal.toNumber() : Number(item.budgetTotal)
       }
-      if (item.budgetTerpakai === null || item.budgetTerpakai === undefined || isNaN(Number(item.budgetTerpakai))) {
-        item.budgetTerpakai = 0
+      if (item.budgetTerpakai && typeof item.budgetTerpakai === 'object' && 's' in item.budgetTerpakai) {
+        item.budgetTerpakai = item.budgetTerpakai.toNumber ? item.budgetTerpakai.toNumber() : Number(item.budgetTerpakai)
       }
+    })
+
+    // Debug: Check if serialization worked correctly
+    serializedProyek.forEach((item: any, index: number) => {
+      console.log(`Item ${index} - budgetTotal:`, item.budgetTotal, 'type:', typeof item.budgetTotal)
+      console.log(`Item ${index} - budgetTerpakai:`, item.budgetTerpakai, 'type:', typeof item.budgetTerpakai)
     })
 
     const totalPages = Math.ceil(total / pageSize)
@@ -154,13 +175,16 @@ export async function getProyekPembangunanById(id: string) {
     // Convert Decimal objects to numbers for Client Component compatibility
     const serializedProyek = serializeDecimalObjects(proyek)
 
-    // Ensure budget values are valid numbers
-    if (serializedProyek.budgetTotal === null || serializedProyek.budgetTotal === undefined || isNaN(Number(serializedProyek.budgetTotal))) {
-      serializedProyek.budgetTotal = 0
+    // Ensure budget values are valid numbers (fallback)
+    if (serializedProyek.budgetTotal && typeof serializedProyek.budgetTotal === 'object' && 's' in serializedProyek.budgetTotal) {
+      serializedProyek.budgetTotal = serializedProyek.budgetTotal.toNumber ? serializedProyek.budgetTotal.toNumber() : Number(serializedProyek.budgetTotal)
     }
-    if (serializedProyek.budgetTerpakai === null || serializedProyek.budgetTerpakai === undefined || isNaN(Number(serializedProyek.budgetTerpakai))) {
-      serializedProyek.budgetTerpakai = 0
+    if (serializedProyek.budgetTerpakai && typeof serializedProyek.budgetTerpakai === 'object' && 's' in serializedProyek.budgetTerpakai) {
+      serializedProyek.budgetTerpakai = serializedProyek.budgetTerpakai.toNumber ? serializedProyek.budgetTerpakai.toNumber() : Number(serializedProyek.budgetTerpakai)
     }
+
+    console.log('Single proyek - budgetTotal:', serializedProyek.budgetTotal, 'type:', typeof serializedProyek.budgetTotal)
+    console.log('Single proyek - budgetTerpakai:', serializedProyek.budgetTerpakai, 'type:', typeof serializedProyek.budgetTerpakai)
 
     return { success: true, data: serializedProyek }
   } catch (error) {
@@ -176,6 +200,9 @@ export async function addProyekPembangunan(data: ProyekFormData) {
     // if (!session || !canManageData(session.user.role)) {
     //   return { success: false, error: 'Unauthorized' }
     // }
+
+    console.log('Creating proyek with data:', data)
+    console.log('Budget total value:', data.budgetTotal, 'type:', typeof data.budgetTotal)
 
     const proyek = await prisma.proyekPembangunan.create({
       data: {
@@ -218,6 +245,9 @@ export async function updateProyekPembangunan(id: string, data: ProyekFormData) 
     // if (!session || !canManageData(session.user.role)) {
     //   return { success: false, error: 'Unauthorized' }
     // }
+
+    console.log('Updating proyek with data:', data)
+    console.log('Budget total value:', data.budgetTotal, 'type:', typeof data.budgetTotal)
 
     const proyek = await prisma.proyekPembangunan.update({
       where: { id },
@@ -332,19 +362,28 @@ export async function getProyekStats() {
     const serializedTotalBudget = serializeDecimalObjects(totalBudget)
     const serializedTotalTerpakai = serializeDecimalObjects(totalTerpakai)
 
-    console.log('Serialized totalBudget:', serializedTotalBudget);
-    console.log('Serialized totalTerpakai:', serializedTotalTerpakai);
+    // Ensure total values are valid numbers
+    const finalTotalBudget = serializedTotalBudget && typeof serializedTotalBudget === 'object' && 's' in serializedTotalBudget
+      ? (serializedTotalBudget.toNumber ? serializedTotalBudget.toNumber() : Number(serializedTotalBudget))
+      : Number(serializedTotalBudget) || 0
+
+    const finalTotalTerpakai = serializedTotalTerpakai && typeof serializedTotalTerpakai === 'object' && 's' in serializedTotalTerpakai
+      ? (serializedTotalTerpakai.toNumber ? serializedTotalTerpakai.toNumber() : Number(serializedTotalTerpakai))
+      : Number(serializedTotalTerpakai) || 0
+
+    console.log('Final totalBudget:', finalTotalBudget, 'type:', typeof finalTotalBudget);
+    console.log('Final totalTerpakai:', finalTotalTerpakai, 'type:', typeof finalTotalTerpakai);
 
     return {
       success: true,
       data: {
         totalProyek,
-        totalBudget: serializedTotalBudget,
-        totalTerpakai: serializedTotalTerpakai,
-        proyekByStatus: serializeDecimalObjects(proyekByStatus.reduce((acc, item) => {
+        totalBudget: finalTotalBudget,
+        totalTerpakai: finalTotalTerpakai,
+        proyekByStatus: proyekByStatus.reduce((acc, item) => {
           acc[item.statusProyek] = item._count.id
           return acc
-        }, {} as Record<string, number>))
+        }, {} as Record<string, number>)
       }
     }
   } catch (error) {
@@ -409,14 +448,20 @@ export async function exportProyekToCSV(search?: string, statusFilter?: string) 
     // Convert Decimal objects to numbers for CSV
     const serializedProyek = serializeDecimalObjects(proyek)
 
-    // Ensure budget values are valid numbers
+    // Ensure budget values are valid numbers for export
     serializedProyek.forEach((item: any) => {
-      if (item.budgetTotal === null || item.budgetTotal === undefined || isNaN(Number(item.budgetTotal))) {
-        item.budgetTotal = 0
+      if (item.budgetTotal && typeof item.budgetTotal === 'object' && 's' in item.budgetTotal) {
+        item.budgetTotal = item.budgetTotal.toNumber ? item.budgetTotal.toNumber() : Number(item.budgetTotal)
       }
-      if (item.budgetTerpakai === null || item.budgetTerpakai === undefined || isNaN(Number(item.budgetTerpakai))) {
-        item.budgetTerpakai = 0
+      if (item.budgetTerpakai && typeof item.budgetTerpakai === 'object' && 's' in item.budgetTerpakai) {
+        item.budgetTerpakai = item.budgetTerpakai.toNumber ? item.budgetTerpakai.toNumber() : Number(item.budgetTerpakai)
       }
+    })
+
+    // Debug: Check if serialization worked correctly for export
+    serializedProyek.forEach((item: any, index: number) => {
+      console.log(`Export item ${index} - budgetTotal:`, item.budgetTotal, 'type:', typeof item.budgetTotal)
+      console.log(`Export item ${index} - budgetTerpakai:`, item.budgetTerpakai, 'type:', typeof item.budgetTerpakai)
     })
 
     const csvData = serializedProyek.map(item => [

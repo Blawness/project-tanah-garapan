@@ -201,6 +201,16 @@ async function main() {
   console.log(`Created ${sampleEntries.length} sample tanah garapan entries`)
   console.log(`Created 3 sample proyek pembangunan`)
   console.log(`Created 3 sample pembelian sertifikat`)
+
+  // Check existing proyek budget values
+  const existingProyek = await prisma.proyekPembangunan.findMany({
+    select: { id: true, namaProyek: true, budgetTotal: true, budgetTerpakai: true }
+  })
+
+  console.log('Existing proyek budget values:')
+  existingProyek.forEach(p => {
+    console.log(`${p.namaProyek}: budgetTotal=${p.budgetTotal}, budgetTerpakai=${p.budgetTerpakai}`)
+  })
 }
 
 main()

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getProyekPembangunan } from '../../../lib/server-actions/proyek'
-// import { deleteProyekPembangunan } from '../../../lib/server-actions/proyek'
+import { getProyekPembangunan, deleteProyekPembangunan } from '../../../lib/server-actions/proyek'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../../lib/auth'
 
@@ -72,26 +71,16 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Temporarily return success for testing
-    // return NextResponse.json({
-    //   success: true,
-    //   message: 'Proyek deleted successfully'
-    // })
+    const result = await deleteProyekPembangunan(id)
 
-    // const result = await deleteProyekPembangunan(id)
-
-    // if (result.success) {
-    //   return NextResponse.json(result)
-    // } else {
-    //   return NextResponse.json(
-    //     { error: result.error },
-    //   //   { status: 400 }
-    //   // )
-    // }
-    return NextResponse.json({
-      success: true,
-      message: "delete temporarily disabled"
-    })
+    if (result.success) {
+      return NextResponse.json(result)
+    } else {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 400 }
+      )
+    }
   } catch (error) {
     console.error('API error:', error)
     return NextResponse.json(
