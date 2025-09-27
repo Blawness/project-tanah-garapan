@@ -1,15 +1,13 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TanahGarapanForm } from '@/components/tanah-garapan/tanah-garapan-form'
-import { addTanahGarapanEntry, updateTanahGarapanEntry } from '@/lib/server-actions/tanah-garapan'
 import { toast } from 'sonner'
 
-// Mock the server actions
-jest.mock('@/lib/server-actions/tanah-garapan')
+// Mock fetch globally
+global.fetch = jest.fn()
 jest.mock('sonner')
 
-const mockAddTanahGarapanEntry = addTanahGarapanEntry as jest.MockedFunction<typeof addTanahGarapanEntry>
-const mockUpdateTanahGarapanEntry = updateTanahGarapanEntry as jest.MockedFunction<typeof updateTanahGarapanEntry>
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>
 const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>
 
 describe('TanahGarapanForm', () => {
@@ -91,11 +89,14 @@ describe('TanahGarapanForm', () => {
 
   it('submits form with valid data for create', async () => {
     const user = userEvent.setup()
-    mockAddTanahGarapanEntry.mockResolvedValue({
-      success: true,
-      data: { id: '1' },
-      message: 'Entry created successfully'
-    })
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: { id: '1', letakTanah: 'Desa Test' },
+        message: 'Entry created successfully'
+      })
+    } as Response)
 
     render(
       <TanahGarapanForm
@@ -115,14 +116,20 @@ describe('TanahGarapanForm', () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(mockAddTanahGarapanEntry).toHaveBeenCalledWith({
-        letakTanah: 'Desa Test',
-        namaPemegangHak: 'John Doe',
-        letterC: 'C-001',
-        nomorSuratKeteranganGarapan: 'SKG-001',
-        luas: 1000,
-        file_url: null,
-        keterangan: null,
+      expect(mockFetch).toHaveBeenCalledWith('/api/tanah-garapan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          letakTanah: 'Desa Test',
+          namaPemegangHak: 'John Doe',
+          letterC: 'C-001',
+          nomorSuratKeteranganGarapan: 'SKG-001',
+          luas: 1000,
+          file_url: null,
+          keterangan: null
+        })
       })
     })
 
@@ -143,11 +150,14 @@ describe('TanahGarapanForm', () => {
       keterangan: null,
     }
 
-    mockUpdateTanahGarapanEntry.mockResolvedValue({
-      success: true,
-      data: { id: '1' },
-      message: 'Entry updated successfully'
-    })
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: { id: '1' },
+        message: 'Entry updated successfully'
+      })
+    } as Response)
 
     render(
       <TanahGarapanForm
@@ -165,14 +175,21 @@ describe('TanahGarapanForm', () => {
     await user.click(submitButton)
 
     await waitFor(() => {
-      expect(mockUpdateTanahGarapanEntry).toHaveBeenCalledWith('1', {
-        letakTanah: 'Desa Updated',
-        namaPemegangHak: 'John Doe',
-        letterC: 'C-001',
-        nomorSuratKeteranganGarapan: 'SKG-001',
-        luas: 1000,
-        file_url: null,
-        keterangan: null,
+      expect(mockFetch).toHaveBeenCalledWith('/api/tanah-garapan', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: '1',
+          letakTanah: 'Desa Updated',
+          namaPemegangHak: 'John Doe',
+          letterC: 'C-001',
+          nomorSuratKeteranganGarapan: 'SKG-001',
+          luas: 1000,
+          file_url: null,
+          keterangan: null,
+        })
       })
     })
 
@@ -182,10 +199,13 @@ describe('TanahGarapanForm', () => {
 
   it('handles form submission error', async () => {
     const user = userEvent.setup()
-    mockAddTanahGarapanEntry.mockResolvedValue({
-      success: false,
-      error: 'Server error'
-    })
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({
+        success: false,
+        error: 'Server error'
+      })
+    } as Response)
 
     render(
       <TanahGarapanForm
@@ -203,6 +223,24 @@ describe('TanahGarapanForm', () => {
 
     const submitButton = screen.getByText('Simpan')
     await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith('/api/tanah-garapan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          letakTanah: 'Desa Test',
+          namaPemegangHak: 'John Doe',
+          letterC: 'C-001',
+          nomorSuratKeteranganGarapan: 'SKG-001',
+          luas: 1000,
+          file_url: null,
+          keterangan: null
+        })
+      })
+    })
 
     await waitFor(() => {
       expect(mockToastError).toHaveBeenCalledWith('Server error')

@@ -80,11 +80,12 @@ export const STATUS_LABELS = {
  * Format currency for export
  */
 export function formatCurrencyForExport(amount: number): string {
+  const numAmount = Number(amount) || 0
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0
-  }).format(amount)
+  }).format(numAmount)
 }
 
 /**

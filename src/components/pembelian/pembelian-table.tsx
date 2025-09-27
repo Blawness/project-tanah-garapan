@@ -194,11 +194,12 @@ export function PembelianTable({
   const isIndeterminate = selectedIds.length > 0 && selectedIds.length < pembelianData.length
 
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0
-    }).format(amount)
+    }).format(numAmount)
   }
 
   const formatDate = (date: string | Date) => {

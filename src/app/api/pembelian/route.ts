@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPembelianSertifikat, addPembelianSertifikat, updatePembelianSertifikat, deletePembelianSertifikat, PembelianFormData } from '@/lib/server-actions/pembelian'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { revalidatePath } from 'next/cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -83,6 +84,9 @@ export async function PUT(request: NextRequest) {
     const result = await updatePembelianSertifikat(id, pembelianData)
 
     if (result.success) {
+      revalidatePath('/pembelian-management')
+      revalidatePath('/proyek-management')
+      revalidatePath('/tanah-garapan')
       return NextResponse.json(result)
     } else {
       return NextResponse.json(
@@ -133,6 +137,9 @@ export async function POST(request: NextRequest) {
     const result = await addPembelianSertifikat(pembelianData)
 
     if (result.success) {
+      revalidatePath('/pembelian-management')
+      revalidatePath('/proyek-management')
+      revalidatePath('/tanah-garapan')
       return NextResponse.json(result)
     } else {
       return NextResponse.json(
@@ -173,6 +180,9 @@ export async function DELETE(request: NextRequest) {
     const result = await deletePembelianSertifikat(id)
 
     if (result.success) {
+      revalidatePath('/pembelian-management')
+      revalidatePath('/proyek-management')
+      revalidatePath('/tanah-garapan')
       return NextResponse.json(result)
     } else {
       return NextResponse.json(

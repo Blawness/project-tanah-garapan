@@ -1,11 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TanahGarapanTable } from '@/components/tanah-garapan/tanah-garapan-table'
-import { deleteTanahGarapanEntry } from '@/lib/server-actions/tanah-garapan'
 import { toast } from 'sonner'
 
-// Mock the server actions
-jest.mock('@/lib/server-actions/tanah-garapan')
+// Mock fetch globally
+global.fetch = jest.fn()
 jest.mock('sonner')
 
 // Mock FilePreview component to prevent render issues
@@ -13,7 +12,7 @@ jest.mock('@/components/shared/file-preview', () => ({
   FilePreview: ({ open, onOpenChange, fileUrl, fileName }: any) => null
 }))
 
-const mockDeleteTanahGarapanEntry = deleteTanahGarapanEntry as jest.MockedFunction<typeof deleteTanahGarapanEntry>
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>
 const mockToastError = toast.error as jest.MockedFunction<typeof toast.error>
 
 // Mock window.confirm
@@ -158,10 +157,13 @@ describe('TanahGarapanTable', () => {
 
   it('handles delete action', async () => {
     const user = userEvent.setup()
-    mockDeleteTanahGarapanEntry.mockResolvedValue({
-      success: true,
-      message: 'Entry deleted successfully'
-    })
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        success: true,
+        message: 'Entry deleted successfully'
+      })
+    } as Response)
 
     render(
       <TanahGarapanTable
@@ -181,7 +183,13 @@ describe('TanahGarapanTable', () => {
     await user.click(deleteButton)
 
     await waitFor(() => {
-      expect(mockDeleteTanahGarapanEntry).toHaveBeenCalledWith('1')
+      expect(mockFetch).toHaveBeenCalledWith('/api/tanah-garapan', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: '1' })
+      })
     })
 
     expect(mockOnRefresh).toHaveBeenCalled()
@@ -274,10 +282,13 @@ describe('TanahGarapanTable', () => {
 
   it('handles delete error', async () => {
     const user = userEvent.setup()
-    mockDeleteTanahGarapanEntry.mockResolvedValue({
-      success: false,
-      error: 'Delete failed'
-    })
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({
+        success: false,
+        error: 'Failed to delete entry'
+      })
+    } as Response)
 
     render(
       <TanahGarapanTable
@@ -297,7 +308,17 @@ describe('TanahGarapanTable', () => {
     await user.click(deleteButton)
 
     await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalledWith('Delete failed')
+      expect(mockFetch).toHaveBeenCalledWith('/api/tanah-garapan', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: '1' })
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('Failed to delete entry')
     })
 
     expect(mockOnRefresh).not.toHaveBeenCalled()

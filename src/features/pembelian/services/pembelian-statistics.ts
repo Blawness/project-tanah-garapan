@@ -69,11 +69,6 @@ export async function getTanahGarapanAvailable() {
 
     // Get tanah garapan that are not yet purchased
     const tanahGarapan = await prisma.tanahGarapanEntry.findMany({
-      where: {
-        pembelianSertifikat: {
-          none: {}
-        }
-      },
       orderBy: { createdAt: 'desc' }
     })
 

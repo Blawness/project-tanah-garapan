@@ -7,11 +7,10 @@ import { logActivity } from './activity'
 
 export async function getTanahGarapanEntries(page: number = 1, pageSize: number = 20): Promise<ApiResponse<{data: any[], total: number, totalPages: number}>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     const skip = (page - 1) * pageSize
 
@@ -44,11 +43,10 @@ export async function getTanahGarapanEntries(page: number = 1, pageSize: number 
 
 export async function getTanahGarapanEntryById(id: string): Promise<ApiResponse<any>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     const entry = await prisma.tanahGarapanEntry.findUnique({
       where: { id }
@@ -67,11 +65,10 @@ export async function getTanahGarapanEntryById(id: string): Promise<ApiResponse<
 
 export async function getTanahGarapanEntriesByIds(ids: string[]): Promise<ApiResponse<any[]>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     const entries = await prisma.tanahGarapanEntry.findMany({
       where: { id: { in: ids } },
@@ -87,11 +84,10 @@ export async function getTanahGarapanEntriesByIds(ids: string[]): Promise<ApiRes
 
 export async function getTanahGarapanEntriesByLetakTanah(location: string): Promise<ApiResponse<any[]>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     const entries = await prisma.tanahGarapanEntry.findMany({
       where: { 
@@ -112,11 +108,10 @@ export async function getTanahGarapanEntriesByLetakTanah(location: string): Prom
 
 export async function addTanahGarapanEntry(data: TanahGarapanFormData): Promise<ApiResponse<any>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session || !canManageData(session.user.role)) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session || !canManageData(session.user.role)) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     console.log('Received data:', data) // Debug log
 
@@ -141,7 +136,7 @@ export async function addTanahGarapanEntry(data: TanahGarapanFormData): Promise<
     })
 
     await logActivity(
-      session.user.name,
+      session?.user?.name || 'System',
       'CREATE_ENTRY',
       `Created new tanah garapan entry: ${entry.letakTanah}`,
       entry
@@ -160,11 +155,10 @@ export async function addTanahGarapanEntry(data: TanahGarapanFormData): Promise<
 
 export async function updateTanahGarapanEntry(id: string, data: TanahGarapanFormData): Promise<ApiResponse<any>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session || !canManageData(session.user.role)) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session || !canManageData(session.user.role)) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     const validatedData = tanahGarapanSchema.parse(data)
 
@@ -182,7 +176,7 @@ export async function updateTanahGarapanEntry(id: string, data: TanahGarapanForm
     })
 
     await logActivity(
-      session.user.name,
+      session?.user?.name || 'System',
       'UPDATE_ENTRY',
       `Updated tanah garapan entry: ${entry.letakTanah}`,
       { old: existingEntry, new: entry }
@@ -198,11 +192,10 @@ export async function updateTanahGarapanEntry(id: string, data: TanahGarapanForm
 
 export async function deleteTanahGarapanEntry(id: string): Promise<ApiResponse<void>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session || !canManageData(session.user.role)) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session || !canManageData(session.user.role)) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     const existingEntry = await prisma.tanahGarapanEntry.findUnique({
       where: { id }
@@ -217,7 +210,7 @@ export async function deleteTanahGarapanEntry(id: string): Promise<ApiResponse<v
     })
 
     await logActivity(
-      session.user.name,
+      session?.user?.name || 'System',
       'DELETE_ENTRY',
       `Deleted tanah garapan entry: ${existingEntry.letakTanah}`,
       existingEntry
@@ -233,11 +226,10 @@ export async function deleteTanahGarapanEntry(id: string): Promise<ApiResponse<v
 
 export async function searchTanahGarapanEntries(query: string): Promise<ApiResponse<any[]>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     const entries = await prisma.tanahGarapanEntry.findMany({
       where: {
@@ -268,11 +260,10 @@ export async function advancedSearchTanahGarapanEntries(filters: {
   dateTo?: string
 }): Promise<ApiResponse<any[]>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     const whereConditions: any = {}
 
@@ -330,11 +321,10 @@ export async function advancedSearchTanahGarapanEntries(filters: {
 
 export async function exportTanahGarapanToCSV(): Promise<ApiResponse<string>> {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions)
-    // if (!session || !canManageData(session.user.role)) {
-    //   return { success: false, error: 'Unauthorized' }
-    // }
+    const session = await getServerSession(authOptions)
+    if (!session || !canManageData(session.user.role)) {
+      return { success: false, error: 'Unauthorized' }
+    }
 
     const entries = await prisma.tanahGarapanEntry.findMany({
       orderBy: { createdAt: 'desc' }
@@ -371,7 +361,7 @@ export async function exportTanahGarapanToCSV(): Promise<ApiResponse<string>> {
     ].join('\n')
 
     await logActivity(
-      session.user.name,
+      session?.user?.name || 'System',
       'EXPORT_CSV',
       'Exported tanah garapan data to CSV',
       { count: entries.length }

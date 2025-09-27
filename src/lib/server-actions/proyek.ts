@@ -99,6 +99,16 @@ export async function getProyekPembangunan(page: number = 1, pageSize: number = 
     // Convert Decimal objects to numbers for Client Component compatibility
     const serializedProyek = serializeDecimalObjects(proyek)
 
+    // Ensure budget values are valid numbers
+    serializedProyek.forEach((item: any) => {
+      if (item.budgetTotal === null || item.budgetTotal === undefined || isNaN(Number(item.budgetTotal))) {
+        item.budgetTotal = 0
+      }
+      if (item.budgetTerpakai === null || item.budgetTerpakai === undefined || isNaN(Number(item.budgetTerpakai))) {
+        item.budgetTerpakai = 0
+      }
+    })
+
     const totalPages = Math.ceil(total / pageSize)
 
     return {
@@ -143,6 +153,14 @@ export async function getProyekPembangunanById(id: string) {
 
     // Convert Decimal objects to numbers for Client Component compatibility
     const serializedProyek = serializeDecimalObjects(proyek)
+
+    // Ensure budget values are valid numbers
+    if (serializedProyek.budgetTotal === null || serializedProyek.budgetTotal === undefined || isNaN(Number(serializedProyek.budgetTotal))) {
+      serializedProyek.budgetTotal = 0
+    }
+    if (serializedProyek.budgetTerpakai === null || serializedProyek.budgetTerpakai === undefined || isNaN(Number(serializedProyek.budgetTerpakai))) {
+      serializedProyek.budgetTerpakai = 0
+    }
 
     return { success: true, data: serializedProyek }
   } catch (error) {
@@ -288,7 +306,7 @@ export async function getProyekStats() {
     //   return { success: false, error: 'Unauthorized' }
     // }
 
-    const [totalProyek, totalBudget, totalTerpakai, proyekByStatus] = await Promise.all([
+    const [totalProyek, totalBudgetResult, totalTerpakaiResult, proyekByStatus] = await Promise.all([
       prisma.proyekPembangunan.count(),
       prisma.proyekPembangunan.aggregate({
         _sum: { budgetTotal: true }
@@ -302,12 +320,27 @@ export async function getProyekStats() {
       })
     ])
 
+    // Handle cases where _sum might be null if no records exist
+    const totalBudget = totalBudgetResult._sum.budgetTotal ?? 0;
+    const totalTerpakai = totalTerpakaiResult._sum.budgetTerpakai ?? 0;
+
+    console.log('Raw totalBudget result:', totalBudgetResult);
+    console.log('Raw totalTerpakai result:', totalTerpakaiResult);
+    console.log('Raw totalBudget value:', totalBudget);
+    console.log('Raw totalTerpakai value:', totalTerpakai);
+
+    const serializedTotalBudget = serializeDecimalObjects(totalBudget)
+    const serializedTotalTerpakai = serializeDecimalObjects(totalTerpakai)
+
+    console.log('Serialized totalBudget:', serializedTotalBudget);
+    console.log('Serialized totalTerpakai:', serializedTotalTerpakai);
+
     return {
       success: true,
       data: {
         totalProyek,
-        totalBudget: Number(totalBudget._sum.budgetTotal) || 0,
-        totalTerpakai: Number(totalTerpakai._sum.budgetTerpakai) || 0,
+        totalBudget: serializedTotalBudget,
+        totalTerpakai: serializedTotalTerpakai,
         proyekByStatus: serializeDecimalObjects(proyekByStatus.reduce((acc, item) => {
           acc[item.statusProyek] = item._count.id
           return acc
@@ -375,6 +408,16 @@ export async function exportProyekToCSV(search?: string, statusFilter?: string) 
 
     // Convert Decimal objects to numbers for CSV
     const serializedProyek = serializeDecimalObjects(proyek)
+
+    // Ensure budget values are valid numbers
+    serializedProyek.forEach((item: any) => {
+      if (item.budgetTotal === null || item.budgetTotal === undefined || isNaN(Number(item.budgetTotal))) {
+        item.budgetTotal = 0
+      }
+      if (item.budgetTerpakai === null || item.budgetTerpakai === undefined || isNaN(Number(item.budgetTerpakai))) {
+        item.budgetTerpakai = 0
+      }
+    })
 
     const csvData = serializedProyek.map(item => [
       item.id,

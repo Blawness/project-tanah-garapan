@@ -73,11 +73,12 @@ export default function ProyekPage({ initialProyekData, initialStats }: ProyekPa
   const [selectedProyekForPembelian, setSelectedProyekForPembelian] = useState<string | null>(null)
 
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0
-    }).format(amount)
+    }).format(numAmount)
   }
 
   const getStatusColor = (status: string) => {
@@ -394,6 +395,7 @@ export default function ProyekPage({ initialProyekData, initialStats }: ProyekPa
             setIsPembelianFormOpen(false)
             setSelectedProyekForPembelian(null)
             loadPembelianData()
+            handleRefresh() // Add this to refresh proyek data and stats
           }}
         />
       </div>

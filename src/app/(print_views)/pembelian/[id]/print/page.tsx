@@ -62,11 +62,12 @@ export default async function PrintSinglePage({ params }: PrintSinglePageProps) 
   }
 
   const formatCurrency = (amount: number) => {
+    const numAmount = Number(amount) || 0
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0
-    }).format(amount)
+    }).format(numAmount)
   }
 
   const formatNumber = (num: number) => {
