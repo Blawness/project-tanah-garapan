@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPembelianSertifikat, addPembelianSertifikat, updatePembelianSertifikat, deletePembelianSertifikat, PembelianFormData } from '@/lib/server-actions/pembelian'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 
 export async function GET(request: NextRequest) {

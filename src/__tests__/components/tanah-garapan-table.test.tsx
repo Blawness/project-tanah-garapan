@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TanahGarapanTable } from '@/components/tanah-garapan/tanah-garapan-table'
 import { toast } from 'sonner'
@@ -9,7 +9,7 @@ jest.mock('sonner')
 
 // Mock FilePreview component to prevent render issues
 jest.mock('@/components/shared/file-preview', () => ({
-  FilePreview: ({ open, onOpenChange, fileUrl, fileName }: any) => null
+  FilePreview: () => null
 }))
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>

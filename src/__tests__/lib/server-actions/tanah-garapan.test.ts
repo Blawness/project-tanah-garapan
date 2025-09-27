@@ -10,7 +10,7 @@ import {
 } from '@/lib/server-actions/tanah-garapan'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
-import { authOptions, canManageData } from '@/lib/auth'
+import { canManageData } from '@/lib/auth'
 
 // Mock dependencies
 jest.mock('@/lib/prisma')
@@ -36,7 +36,7 @@ describe('Tanah Garapan Server Actions', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockGetServerSession.mockResolvedValue(mockSession as any)
+    mockGetServerSession.mockResolvedValue(mockSession)
     mockCanManageData.mockReturnValue(true)
   })
 
@@ -155,7 +155,7 @@ describe('Tanah Garapan Server Actions', () => {
     it('returns unauthorized when user cannot manage data', async () => {
       mockCanManageData.mockReturnValue(false)
 
-      const result = await addTanahGarapanEntry({} as any)
+      const result = await addTanahGarapanEntry({} as never)
 
       expect(result.success).toBe(false)
       expect(result.error).toBe('Unauthorized')
