@@ -34,8 +34,14 @@ export function PurchaseInfoSection({ form }: PurchaseInfoSectionProps) {
               <FormControl>
                 <Input
                   type="number"
-                  placeholder="Masukkan harga beli"
+                  step="1000"
+                  placeholder="0"
                   {...field}
+                  value={field.value?.toString() || ''}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    field.onChange(value === '' ? 0 : Number(value))
+                  }}
                 />
               </FormControl>
               <FormMessage />

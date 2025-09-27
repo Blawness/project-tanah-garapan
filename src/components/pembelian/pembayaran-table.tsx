@@ -61,8 +61,15 @@ export function PembayaranTable({ data, pembelianId, onRefresh }: PembayaranTabl
     window.location.reload()
   }
 
-  const formatCurrency = (amount: number) => {
-    const numAmount = Number(amount) || 0
+  const formatCurrency = (amount: any) => {
+    // Handle Prisma Decimal objects
+    let numAmount = 0
+    if (amount && typeof amount === 'object' && 's' in amount && 'e' in amount && 'd' in amount) {
+      numAmount = amount.toNumber ? amount.toNumber() : Number(amount)
+    } else {
+      numAmount = Number(amount) || 0
+    }
+
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
@@ -110,7 +117,7 @@ export function PembayaranTable({ data, pembelianId, onRefresh }: PembayaranTabl
                 {data && data.length > 0 ? data.map((pembayaran) => (
                   <TableRow key={pembayaran.id}>
                     <TableCell className="font-medium">{pembayaran.nomorPembayaran}</TableCell>
-                    <TableCell>{formatCurrency(Number(pembayaran.jumlahPembayaran))}</TableCell>
+                    <TableCell>{formatCurrency(pembayaran.jumlahPembayaran)}</TableCell>
                     <TableCell>{jenisLabels[pembayaran.jenisPembayaran as keyof typeof jenisLabels]}</TableCell>
                     <TableCell>{metodeLabels[pembayaran.metodePembayaran as keyof typeof metodeLabels]}</TableCell>
                     <TableCell>

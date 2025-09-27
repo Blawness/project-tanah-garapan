@@ -58,8 +58,15 @@ export function PembelianDashboard({ className }: PembelianDashboardProps) {
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    const numAmount = Number(amount) || 0
+  const formatCurrency = (amount: any) => {
+    // Handle Prisma Decimal objects
+    let numAmount = 0
+    if (amount && typeof amount === 'object' && 's' in amount && 'e' in amount && 'd' in amount) {
+      numAmount = amount.toNumber ? amount.toNumber() : Number(amount)
+    } else {
+      numAmount = Number(amount) || 0
+    }
+
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',

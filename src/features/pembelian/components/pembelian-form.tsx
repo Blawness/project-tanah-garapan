@@ -72,7 +72,24 @@ export function PembelianForm({
 
   const form = useForm<PembelianFormData>({
     resolver: zodResolver(pembelianSchema),
-    defaultValues: getFormDefaultValues(pembelian, proyekId),
+    defaultValues: {
+      proyekId: '',
+      tanahGarapanId: '',
+      namaWarga: '',
+      alamatWarga: '',
+      noKtpWarga: '',
+      noHpWarga: '',
+      hargaBeli: 0,
+      statusPembelian: 'NEGOTIATION',
+      tanggalKontrak: '',
+      tanggalPembayaran: '',
+      metodePembayaran: 'CASH',
+      buktiPembayaran: '',
+      keterangan: '',
+      nomorSertifikat: '',
+      fileSertifikat: '',
+      statusSertifikat: 'PENDING'
+    },
     mode: 'onSubmit'
   })
 
@@ -81,6 +98,17 @@ export function PembelianForm({
       loadFormData()
     }
   }, [open])
+
+  // Reset form when pembelian prop changes (for editing)
+  useEffect(() => {
+    if (pembelian) {
+      console.log('Resetting pembelian form with data:', pembelian)
+      console.log('Harga beli from pembelian:', pembelian.hargaBeli, 'type:', typeof pembelian.hargaBeli)
+      const defaultValues = getFormDefaultValues(pembelian, proyekId)
+      console.log('Form default values:', defaultValues)
+      form.reset(defaultValues)
+    }
+  }, [pembelian, proyekId, form])
 
   // Update form when proyekId prop changes
   useEffect(() => {

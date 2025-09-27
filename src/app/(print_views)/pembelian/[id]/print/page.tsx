@@ -196,7 +196,7 @@ export default async function PrintSinglePage({ params }: PrintSinglePageProps) 
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="font-medium">Harga Pembelian:</span>
-                    <span className="font-bold text-lg">{formatCurrency(Number(entry.hargaBeli))}</span>
+                    <span className="font-bold text-lg">{formatCurrency(entry.hargaBeli)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Status:</span>
@@ -244,7 +244,7 @@ export default async function PrintSinglePage({ params }: PrintSinglePageProps) 
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">{formatCurrency(Number(payment.jumlahPembayaran))}</p>
+                        <p className="font-bold">{formatCurrency(payment.jumlahPembayaran)}</p>
                         <Badge className="text-xs">
                           {payment.statusPembayaran}
                         </Badge>

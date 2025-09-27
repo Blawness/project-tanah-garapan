@@ -72,8 +72,15 @@ export default function ProyekPage({ initialProyekData, initialStats }: ProyekPa
   const [activeTab, setActiveTab] = useState('proyek')
   const [selectedProyekForPembelian, setSelectedProyekForPembelian] = useState<string | null>(null)
 
-  const formatCurrency = (amount: number) => {
-    const numAmount = Number(amount) || 0
+  const formatCurrency = (amount: any) => {
+    // Handle Prisma Decimal objects
+    let numAmount = 0
+    if (amount && typeof amount === 'object' && 's' in amount && 'e' in amount && 'd' in amount) {
+      numAmount = amount.toNumber ? amount.toNumber() : Number(amount)
+    } else {
+      numAmount = Number(amount) || 0
+    }
+
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
@@ -290,7 +297,7 @@ export default function ProyekPage({ initialProyekData, initialStats }: ProyekPa
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {isLoadingStats ? '...' : formatCurrency(Number(stats.totalBudget))}
+                    {isLoadingStats ? '...' : formatCurrency(stats.totalBudget)}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Budget keseluruhan
@@ -305,7 +312,7 @@ export default function ProyekPage({ initialProyekData, initialStats }: ProyekPa
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {isLoadingStats ? '...' : formatCurrency(Number(stats.totalTerpakai))}
+                    {isLoadingStats ? '...' : formatCurrency(stats.totalTerpakai)}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Budget yang sudah digunakan

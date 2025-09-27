@@ -95,8 +95,15 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
     setIsDetailDialogOpen(true)
   }
 
-  const formatCurrency = (amount: number) => {
-    const numAmount = Number(amount) || 0
+  const formatCurrency = (amount: any) => {
+    // Handle Prisma Decimal objects
+    let numAmount = 0
+    if (amount && typeof amount === 'object' && 's' in amount && 'e' in amount && 'd' in amount) {
+      numAmount = amount.toNumber ? amount.toNumber() : Number(amount)
+    } else {
+      numAmount = Number(amount) || 0
+    }
+
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
@@ -143,8 +150,8 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
                       {statusLabels[proyek.statusProyek as keyof typeof statusLabels]}
                     </Badge>
                   </TableCell>
-                  <TableCell>{formatCurrency(Number(proyek.budgetTotal))}</TableCell>
-                  <TableCell>{formatCurrency(Number(proyek.budgetTerpakai))}</TableCell>
+                  <TableCell>{formatCurrency(proyek.budgetTotal)}</TableCell>
+                  <TableCell>{formatCurrency(proyek.budgetTerpakai)}</TableCell>
                   <TableCell>{formatDate(proyek.tanggalMulai)}</TableCell>
                   <TableCell>{formatDate(proyek.tanggalSelesai)}</TableCell>
                   <TableCell className="text-right">
@@ -270,8 +277,8 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
                         {statusLabels[selectedProyek.statusProyek as keyof typeof statusLabels]}
                       </Badge>
                     </p>
-                    <p><strong>Budget Total:</strong> {formatCurrency(Number(selectedProyek.budgetTotal))}</p>
-                    <p><strong>Budget Terpakai:</strong> {formatCurrency(Number(selectedProyek.budgetTerpakai))}</p>
+                    <p><strong>Budget Total:</strong> {formatCurrency(selectedProyek.budgetTotal)}</p>
+                    <p><strong>Budget Terpakai:</strong> {formatCurrency(selectedProyek.budgetTerpakai)}</p>
                   </div>
                 </div>
                 <div>
@@ -299,7 +306,7 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
                     {selectedProyek.pembelianSertifikat.map((pembelian: any) => (
                       <div key={pembelian.id} className="border rounded p-3">
                         <p><strong>Warga:</strong> {pembelian.namaWarga}</p>
-                        <p><strong>Harga:</strong> {formatCurrency(Number(pembelian.hargaBeli))}</p>
+                        <p><strong>Harga:</strong> {formatCurrency(pembelian.hargaBeli)}</p>
                         <p><strong>Status:</strong> {pembelian.statusPembelian}</p>
                       </div>
                     ))}

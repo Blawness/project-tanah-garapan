@@ -36,11 +36,16 @@ export async function getPembelianStats() {
       })
     ])
 
+    const serializedTotalHarga = serializeDecimalObjects(totalHarga._sum.hargaBeli)
+    const finalTotalHarga = serializedTotalHarga && typeof serializedTotalHarga === 'object' && 's' in serializedTotalHarga
+      ? (serializedTotalHarga.toNumber ? serializedTotalHarga.toNumber() : Number(serializedTotalHarga))
+      : Number(serializedTotalHarga) || 0
+
     return {
       success: true,
       data: {
         totalPembelian,
-        totalHarga: serializeDecimalObjects(totalHarga._sum.hargaBeli) || 0,
+        totalHarga: finalTotalHarga,
         pembelianByStatus: pembelianByStatus.reduce((acc, item) => {
           acc[item.statusPembelian] = item._count.id
           return acc

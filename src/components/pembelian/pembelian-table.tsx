@@ -193,8 +193,15 @@ export function PembelianTable({
   const isAllSelected = pembelianData && pembelianData.length > 0 && selectedIds.length === pembelianData.length
   const isIndeterminate = selectedIds.length > 0 && selectedIds.length < pembelianData.length
 
-  const formatCurrency = (amount: number) => {
-    const numAmount = Number(amount) || 0
+  const formatCurrency = (amount: any) => {
+    // Handle Prisma Decimal objects
+    let numAmount = 0
+    if (amount && typeof amount === 'object' && 's' in amount && 'e' in amount && 'd' in amount) {
+      numAmount = amount.toNumber ? amount.toNumber() : Number(amount)
+    } else {
+      numAmount = Number(amount) || 0
+    }
+
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
@@ -273,7 +280,7 @@ export function PembelianTable({
                       <div className="text-sm text-gray-500">{pembelian.tanahGarapan?.namaPemegangHak}</div>
                     </div>
                   </TableCell>
-                  <TableCell>{formatCurrency(Number(pembelian.hargaBeli))}</TableCell>
+                  <TableCell>{formatCurrency(pembelian.hargaBeli)}</TableCell>
                   <TableCell>
                     <Badge className={statusColors[pembelian.statusPembelian as keyof typeof statusColors]}>
                       {statusLabels[pembelian.statusPembelian as keyof typeof statusLabels]}
@@ -442,7 +449,7 @@ export function PembelianTable({
                 <div>
                   <h4 className="font-semibold mb-2">Informasi Pembelian</h4>
                   <div className="space-y-2">
-                    <p><strong>Harga Beli:</strong> {formatCurrency(Number(selectedPembelian.hargaBeli))}</p>
+                    <p><strong>Harga Beli:</strong> {formatCurrency(selectedPembelian.hargaBeli)}</p>
                     <p><strong>Status:</strong>
                       <Badge className={`ml-2 ${statusColors[selectedPembelian.statusPembelian as keyof typeof statusColors]}`}>
                         {statusLabels[selectedPembelian.statusPembelian as keyof typeof statusLabels]}

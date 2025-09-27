@@ -86,7 +86,7 @@ export function getFormDefaultValues(
   pembelian?: any,
   proyekId?: string
 ): Partial<PembelianFormData> {
-  return {
+  const result = {
     proyekId: pembelian?.proyekId || proyekId || '',
     tanahGarapanId: pembelian?.tanahGarapanId || '',
     namaWarga: pembelian?.namaWarga || '',
@@ -95,7 +95,6 @@ export function getFormDefaultValues(
     noHpWarga: pembelian?.noHpWarga || '',
     hargaBeli: pembelian?.hargaBeli || 0,
     statusPembelian: pembelian?.statusPembelian || 'NEGOTIATION',
-    statusSertifikat: pembelian?.statusSertifikat || 'PENDING',
     tanggalKontrak: formatDateForForm(pembelian?.tanggalKontrak),
     tanggalPembayaran: formatDateForForm(pembelian?.tanggalPembayaran),
     metodePembayaran: pembelian?.metodePembayaran || 'CASH',
@@ -105,5 +104,11 @@ export function getFormDefaultValues(
     fileSertifikat: pembelian?.fileSertifikat || '',
     statusSertifikat: pembelian?.statusSertifikat || 'PENDING'
   }
+
+  console.log('getFormDefaultValues input:', { pembelian, proyekId })
+  console.log('getFormDefaultValues result:', result)
+  console.log('Harga beli value:', result.hargaBeli, 'type:', typeof result.hargaBeli)
+
+  return result
 }
 

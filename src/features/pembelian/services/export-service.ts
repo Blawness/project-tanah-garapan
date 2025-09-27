@@ -79,8 +79,15 @@ export const STATUS_LABELS = {
 /**
  * Format currency for export
  */
-export function formatCurrencyForExport(amount: number): string {
-  const numAmount = Number(amount) || 0
+export function formatCurrencyForExport(amount: any): string {
+  // Handle Prisma Decimal objects
+  let numAmount = 0
+  if (amount && typeof amount === 'object' && 's' in amount && 'e' in amount && 'd' in amount) {
+    numAmount = amount.toNumber ? amount.toNumber() : Number(amount)
+  } else {
+    numAmount = Number(amount) || 0
+  }
+
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
@@ -140,7 +147,7 @@ export function generateCSVContent(data: any[], selectedFields: Record<string, b
       .map(([field]) => {
         switch (field) {
           case 'hargaBeli':
-            return formatCurrencyForExport(Number(item[field]))
+            return formatCurrencyForExport(item[field])
           case 'luas':
             return item[field]?.toString() || ''
           case 'tanggalKontrak':

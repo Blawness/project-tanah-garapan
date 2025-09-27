@@ -15,8 +15,9 @@ export function serializeDecimalObjects(obj: any): any {
   }
 
   // Handle Prisma Decimal objects
-  if (obj.constructor && obj.constructor.name === 'Decimal') {
-    return obj.toNumber() // Use toNumber() for Decimal objects
+  if (obj && typeof obj === 'object' && 's' in obj && 'e' in obj && 'd' in obj) {
+    // Prisma Decimal format: { s: 1, e: 3, d: [3909] }
+    return obj.toNumber ? obj.toNumber() : Number(obj)
   }
 
   // Handle Date objects
