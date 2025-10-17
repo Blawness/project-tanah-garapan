@@ -78,8 +78,6 @@ model ProyekPembangunan {
   statusProyek          StatusProyek @default(PLANNING)
   tanggalMulai          DateTime?
   tanggalSelesai        DateTime?
-  budgetTotal           Decimal  @db.Decimal(15,2)
-  budgetTerpakai        Decimal  @db.Decimal(15,2) @default(0)
   createdBy             String
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn, getSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -38,7 +38,7 @@ export default function LoginPage() {
         toast.error('Invalid email or password')
       } else {
         toast.success('Login successful')
-        router.push('/tanah-garapan')
+        router.push('/dashboard')
         router.refresh()
       }
     } catch (error) {

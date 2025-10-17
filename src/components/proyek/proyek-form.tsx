@@ -19,8 +19,7 @@ const proyekSchema = z.object({
   deskripsi: z.string().optional(),
   statusProyek: z.enum(['PLANNING', 'ONGOING', 'COMPLETED', 'CANCELLED']),
   tanggalMulai: z.string().optional(),
-  tanggalSelesai: z.string().optional(),
-  budgetTotal: z.coerce.number().positive('Budget must be positive')
+  tanggalSelesai: z.string().optional()
 })
 
 interface ProyekFormProps {
@@ -34,7 +33,6 @@ interface ProyekFormProps {
     statusProyek: string
     tanggalMulai?: string | Date
     tanggalSelesai?: string | Date
-    budgetTotal: number
   }
   onSuccess?: () => void
 }
@@ -56,8 +54,7 @@ export function ProyekForm({
       deskripsi: '',
       statusProyek: 'PLANNING',
       tanggalMulai: '',
-      tanggalSelesai: '',
-      budgetTotal: 0
+      tanggalSelesai: ''
     },
     mode: 'onChange'
   })
@@ -66,15 +63,13 @@ export function ProyekForm({
   useEffect(() => {
     if (proyek) {
       console.log('Resetting form with proyek data:', proyek)
-      console.log('Budget total from proyek:', proyek.budgetTotal, 'type:', typeof proyek.budgetTotal)
       form.reset({
         namaProyek: proyek.namaProyek || '',
         lokasiProyek: proyek.lokasiProyek || '',
         deskripsi: proyek.deskripsi || '',
         statusProyek: proyek.statusProyek || 'PLANNING',
         tanggalMulai: proyek.tanggalMulai ? new Date(proyek.tanggalMulai).toISOString().split('T')[0] : '',
-        tanggalSelesai: proyek.tanggalSelesai ? new Date(proyek.tanggalSelesai).toISOString().split('T')[0] : '',
-        budgetTotal: proyek.budgetTotal ? Number(proyek.budgetTotal) : 0
+        tanggalSelesai: proyek.tanggalSelesai ? new Date(proyek.tanggalSelesai).toISOString().split('T')[0] : ''
       })
     }
   }, [proyek, form])
@@ -83,7 +78,6 @@ export function ProyekForm({
     setIsLoading(true)
 
     console.log('Form submission data:', data)
-    console.log('Budget total from form:', data.budgetTotal, 'type:', typeof data.budgetTotal)
 
     try {
       const result = isEdit
@@ -219,28 +213,6 @@ export function ProyekForm({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="budgetTotal"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Budget Total (Rp)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="1000"
-                      placeholder="0"
-                      value={field.value?.toString() || ''}
-                      onChange={(e) => {
-                        const value = e.target.value
-                        field.onChange(value === '' ? 0 : Number(value))
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button 

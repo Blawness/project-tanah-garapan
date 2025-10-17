@@ -23,11 +23,14 @@ interface ProyekTableProps {
     statusProyek: string
     tanggalMulai?: string | Date
     tanggalSelesai?: string | Date
-    budgetTotal: number
-    budgetTerpakai: number
     createdAt: string | Date
     updatedAt: string | Date
-    pembelianSertifikat?: Array<any>
+    pembelianSertifikat?: Array<{
+      id: string
+      namaWarga: string
+      hargaBeli: number
+      statusPembelian: string
+    }>
   }>
   onRefresh: () => void
   onCreateNew: (proyekId?: string) => void
@@ -133,8 +136,6 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
                 <TableHead>Nama Proyek</TableHead>
                 <TableHead>Lokasi</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Budget Total</TableHead>
-                <TableHead>Budget Terpakai</TableHead>
                 <TableHead>Tanggal Mulai</TableHead>
                 <TableHead>Tanggal Selesai</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
@@ -150,8 +151,6 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
                       {statusLabels[proyek.statusProyek as keyof typeof statusLabels]}
                     </Badge>
                   </TableCell>
-                  <TableCell>{formatCurrency(proyek.budgetTotal)}</TableCell>
-                  <TableCell>{formatCurrency(proyek.budgetTerpakai)}</TableCell>
                   <TableCell>{formatDate(proyek.tanggalMulai)}</TableCell>
                   <TableCell>{formatDate(proyek.tanggalSelesai)}</TableCell>
                   <TableCell className="text-right">
@@ -272,13 +271,11 @@ export function ProyekTable({ data, onRefresh, onCreateNew, pagination, onPageCh
                   <div className="space-y-2">
                     <p><strong>Nama:</strong> {selectedProyek.namaProyek}</p>
                     <p><strong>Lokasi:</strong> {selectedProyek.lokasiProyek}</p>
-                    <p><strong>Status:</strong> 
+                    <p><strong>Status:</strong>
                       <Badge className={`ml-2 ${statusColors[selectedProyek.statusProyek as keyof typeof statusColors]}`}>
                         {statusLabels[selectedProyek.statusProyek as keyof typeof statusLabels]}
                       </Badge>
                     </p>
-                    <p><strong>Budget Total:</strong> {formatCurrency(selectedProyek.budgetTotal)}</p>
-                    <p><strong>Budget Terpakai:</strong> {formatCurrency(selectedProyek.budgetTerpakai)}</p>
                   </div>
                 </div>
                 <div>
